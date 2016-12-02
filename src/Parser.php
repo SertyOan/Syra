@@ -1,25 +1,10 @@
 <?php
 class Model_Parser {
-	private static
-		$language;
-
 	private
 		$request,
 		$stmt = '';
 
-	public static function setLanguage($language) {
-		if(!Kernel_G11n::isActiveLanguage($language)) {
-			throw new Exception('CodeError::invalid language for parser');
-		}
-
-		self::$language =& $language;
-	}
-
-	public static function getLanguage() {
-		return self::$language;
-	}
-
-	public static function parse(Model_Request &$request) {
+	public static function parse(Request &$request) {
 		$parser = new Model_Parser($request);
 		$parser->parseToSQL();
 		return $parser->stmt;
@@ -70,14 +55,7 @@ class Model_Parser {
 
 		foreach($this->request->fields as $key => $fields) {
 			foreach($fields as $field) {
-				if(!is_null(self::$language)
-				&& $this->request->tables[$key]->isTranslated($field)
-				&& !isset($this->request->notTranslatedTables[$key])) {
-					$selectedFields[] = 'IFNULL(TRL'.$key.'.'.$field.', T'.$key.'.'.$field.') AS T'.$key.'_'.$field;
-				}
-				else {
-					$selectedFields[] = 'T'.$key.'.'.$field.' AS T'.$key.'_'.$field;
-				}
+                $selectedFields[] = 'T'.$key.'.'.$field.' AS T'.$key.'_'.$field;
 			}
 		}
 
@@ -93,13 +71,6 @@ class Model_Parser {
 	private function setTables() {
 		$rootTable = $this->request->tables[0];
 		$this->stmt .= "\n".'FROM `'.$rootTable->myTable().'` T0';
-
-		if(!is_null(self::$language)
-		&& $rootTable::TRANSLATED
-		&& !isset($this->request->notTranslatedTables[0])) {
-			$this->stmt .= "\n".'LEFT JOIN `'.$rootTable->myTable().'_TRL` TRL0 ';
-			$this->stmt .= 'ON (T0.id=TRL0.id AND TRL0.language=\''.self::$language.'\')';
-		}
 
 		foreach($this->request->links as $table => $links) {
 			foreach($links as $link) {
@@ -119,12 +90,6 @@ class Model_Parser {
 				$this->stmt .= ' ON (T'.$table.'.`'.$link['originField'].'`=T'.$link['table'].'.`'.$link['destinationField'].'`';
 				$this->tableJoinCondition($link['table']);
 				$this->stmt .= ')';
-
-				if(!empty(self::$language)
-				&& $object::TRANSLATED
-				&& !isset($this->request->notTranslatedTables[$link['table']])) {
-					$this->stmt .= "\n".'LEFT JOIN `'.$object->myTable().'_TRL` TRL'.$link['table'].' ON (T'.$link['table'].'.id=TRL'.$link['table'].'.id AND TRL'.$link['table'].'.language=\''.self::$language.'\')';
-				}
 			}
 		}
 	}
