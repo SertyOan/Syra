@@ -1,51 +1,58 @@
 <?php
-class Model_Mapper {
+namespace Syra\MySQL;
+
+abstract class Mapper {
     private
+        $database,
         $request,
         $objects = Array(),
         $pathes = Array();
 
-    public static function map(Model_Request $request) {
-        $mapper = new Model_Mapper($request);
+    public static function mapAsObjects(Request $request) {
+        $mapper = new static($request);
         return $mapper->mapRequest();
     }
 
-    public static function mapObject(Model_Request $request) {
+    public static function mapAsObject(Request $request) {
         $records = self::map($request);
         return end($records);
     }
 
-    public static function mapAsArray(Model_Request $request) {
-        return self::objectsToArray(self::map($request));
+    public static function mapAsArrays(Request $request) {
+        return self::objectsAsArrays(self::map($request));
     }
 
-    public static function mapObjectAsArray(Model_Request $request) {
+    public static function mapAsArray(Request $request) {
         $object = self::mapObject($request);
-        return ($object instanceof Model_Object ? $object->toArray() : $object);
+        return $object instanceof Object ? $object->asArray() : $object;
     }
 
-    public static function objectsToArray($objects) {
-        $rows = Array();
+    public static function objectsAsArrays(Array $objects = Array()) {
+        $arrays = Array();
 
         foreach($objects as $object) {
-            if(!($object instanceof Model_Object)) {
-                throw new Exception('CodeError::needs an array of Model_Object');
+            if(!($object instanceof Object)) {
+                throw new LogicException('Can only transform data objects to array');
             }
 
-            $rows[] = $object->toArray();
+            $arrays[] = $object->asArray();
         }
 
-        return $rows;
+        return $arrays;
     }
 
-    private function __construct(Model_Request $request) {
+    private function __construct(Request $request) {
         $this->request = $request;
+
+        $class = static::DATABASE_CLASS;
+        $this->database = $class::get();
+        // TODO check database implements reader/writer methods
     }
 
     private function mapRequest() {
         $lastIndex = null;
-        $stmt = Model_Parser::parse($this->request);
-        $rows = Model_Database::get()->queryRows($stmt);
+        $stmt = Parser::parse($this->request);
+        $rows = $this->database->queryRows($stmt);
 
         foreach($rows as $rowID => $line) {
             for($i = 0, $c = sizeof($this->request->tables); $i < $c; $i++) {
@@ -114,8 +121,7 @@ class Model_Mapper {
                         if($link['table'] === $destination) {
                             $linkField = $link['originField'];
 
-                            if(isset($this->request->tables[$source]->$linkField)
-                            && $this->request->tables[$source]->$linkField instanceof Model_Object) {
+                            if(isset($this->request->tables[$source]->$linkField) && $this->request->tables[$source]->$linkField instanceof Object) {
                                 $this->pathes[$destination][] = $linkField.'-'.$destination;
                             }
                             else {

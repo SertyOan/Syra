@@ -1,4 +1,5 @@
-<?php namespace Syra;
+<?php
+namespace Syra\MySQL;
 
 class Request {
 	const
@@ -12,7 +13,6 @@ class Request {
 
 	private
 		$tables = Array(),
-		$notTranslatedTables = Array(),
 		$index = Array(),
 		$fields = Array(),
 		$orderBy = Array(),

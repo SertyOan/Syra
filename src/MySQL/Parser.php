@@ -1,24 +1,26 @@
 <?php
-class Model_Parser {
+namespace Syra\MySQL;
+
+class Parser {
 	private
 		$request,
 		$stmt = '';
 
 	public static function parse(Request &$request) {
-		$parser = new Model_Parser($request);
+		$parser = new self($request);
 		$parser->parseToSQL();
 		return $parser->stmt;
 	}
 
 	public static function count(Model_Request &$request) {
-		$parser = new Model_Parser($request);
+		$parser = new self($request);
 		$parser->parseToCount();
 		// DEBUG debug('request object parsing result : '.$parser->stmt);
 		$data = Model_Database::get()->queryRows($parser->stmt);
 		return ((Integer) $data[0]['C']);
 	}
 
-	private function __construct(Model_Request &$request) {
+	private function __construct(Request &$request) {
 		$this->request =& $request;
 	}
 
@@ -74,10 +76,10 @@ class Model_Parser {
 
 		foreach($this->request->links as $table => $links) {
 			foreach($links as $link) {
-				if($link['joinType'] == Model_Request::LEFT_JOIN) {
+				if($link['joinType'] == Request::LEFT_JOIN) {
 					$this->stmt .= "\n".'LEFT JOIN ';
 				}
-				else if($link['joinType'] == Model_Request::INNER_JOIN) {
+				else if($link['joinType'] == Request::INNER_JOIN) {
 					$this->stmt .= "\n".'INNER JOIN ';
 				}
 				else {
@@ -167,13 +169,13 @@ class Model_Parser {
 
 		foreach($this->request->orderBy as $clause) {
 			switch($clause['option']) {
-				case Model_Request::DAY:
+				case Request::DAY:
 					$orders[] = 'DAY(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
-				case Model_Request::MONTH:
+				case Request::MONTH:
 					$orders[] = 'MONTH(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
-				case Model_Request::YEAR:
+				case Request::YEAR:
 					$orders[] = 'YEAR(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
 				default:
@@ -199,37 +201,37 @@ class Model_Parser {
 		}
 
 		switch($operator) {
-			case Model_Request::IS_NULL:
+			case 'IS NULL':
 				$clause = $field.' IS NULL';
 				break;
-			case Model_Request::IS_NOT_NULL:
+			case 'IS NOT NULL':
 				$clause = $field.' IS NOT NULL';
 				break;
-			case Model_Request::GREATER_THAN:
+			case '>':
 				$clause = $field.'>'.$value;
 				break;
-			case Model_Request::LOWER_THAN:
+			case '<':
 				$clause = $field.'<'.$value;
 				break;
-			case Model_Request::EQUAL_OR_GREATER_THAN:
+			case '>=':
 				$clause = $field.'>='.$value;
 				break;
-			case Model_Request::EQUAL_OR_LOWER_THAN:
+			case '<=':
 				$clause = $field.'<='.$value;
 				break;
-			case Model_Request::EQUAL:
+			case '=':
 				$clause = $field.'='.$value;
 				break;
-			case Model_Request::DIFFERENT:
+			case '!=':
 				$clause = $field.'!='.$value;
 				break;
-			case Model_Request::LIKE:
+			case 'LIKE':
 				$clause = $field.' LIKE '.$value;
 				break;
-			case Model_Request::LIKE_CI:
+			case Model_Request::LIKE_CI: // TODO
 				$clause = 'UPPER('.$field.') LIKE UPPER('.$value.')';
 				break;
-			case Model_Request::IN:
+			case 'IN':
 				if(is_array($value) && sizeof($value) != 0) {
 					if(is_string($value[0])) {
 						foreach($value as $key => $val) {
@@ -243,7 +245,7 @@ class Model_Parser {
 					$clause = $field.' IN (-1)';
 				}
 				break;
-			case Model_Request::NOT_IN:
+			case 'NOT IN':
 				if(is_array($value) && sizeof($value) != 0) {
 					if(is_string($value[0])) {
 						foreach($value as $key => $val) {
