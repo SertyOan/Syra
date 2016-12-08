@@ -51,16 +51,17 @@ abstract class Mapper {
 
     private function mapRequest() {
         $lastIndex = null;
-        $stmt = Parser::parse($this->request);
-        $rows = $this->database->queryRows($stmt);
+        $statement = Parser::parse($this->request);
+        $rows = $this->database->queryRows($statement);
+		$result = $this->database->query($statement);
 
-        foreach($rows as $rowID => $line) {
+        while($line = $result->fetch_assoc()) {
             for($i = 0, $c = sizeof($this->request->tables); $i < $c; $i++) {
                 if(sizeof($this->request->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
                     continue;
                 }
 
-                $class = $this->request->tables[$i]->myClass();
+                $class = $this->request->tables[$i];
                 $object = new $class;
                 $object->map($line, 'T'.$i);
                 $objectID = $object->id;
@@ -80,7 +81,7 @@ abstract class Mapper {
                         if($j !== 0) {
                             $target =& $target->$step;
 
-                            if($target instanceof OsyLib_Collection) {
+                            if(preg_match('/^my/', $step)) {
                                 $stepID = $line['T'.$tableID.'_id'];
                                 $target =& $target->at($stepID);
 
@@ -104,8 +105,6 @@ abstract class Mapper {
                     }
                 }
             }
-
-            unset($rows[$rowID]);
         }
 
         return $this->objects;

@@ -97,13 +97,13 @@ abstract class Object {
 
 	public function getPropertyClass($property) {
 		// DEBUG if(empty(static::$properties[$property])) {
-		// DEBUG 	throw new \Exception('CodeError::property '.$property.' does not exist');
+		// DEBUG 	throw new \Exception('Property not defined');
 		// DEBUG }
 		return static::$properties[$property]['class'];
 	}
 
-	final public function myTable() {
-		return static::DATABASE_SCHEMA.'`.`'.static::DATABASE_TABLE;
+	final public static function myTable() {
+		return '`'.static::DATABASE_SCHEMA.'`.`'.static::DATABASE_TABLE.'`';
 	}
 
 	final public function myClass() {
@@ -161,7 +161,7 @@ abstract class Object {
 
 	public function delete() {
 		if($this->isSaved()) {
-			$stmt = 'DELETE FROM `'.$this->myTable().'` WHERE `id`='.$this->id.' LIMIT 1';
+			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
             $database = ${static::DATABASE_CLASS}::get();
             $database->writer->query($stmt); // TODO how do we get writer database access in current model
 			$this->setSaved(false);
@@ -211,7 +211,7 @@ abstract class Object {
 		}
 
 		if($this->isSaved()) {
-			$stmt = 'UPDATE `'.$this->myTable().'` SET ';
+			$stmt = 'UPDATE '.self::myTable().' SET ';
 			$updatedFields = Array();
 
 			foreach($fields as $key => $value) {
@@ -221,7 +221,7 @@ abstract class Object {
 			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$this->id.' LIMIT 1';
 		}
 		else {
-			$stmt = 'INSERT INTO `'.$this->myTable().'` (';
+			$stmt = 'INSERT INTO '.self::myTable().' (';
 			$stmt .= implode(',', array_keys($fields));
 			$stmt .= ') VALUES (';
 			$stmt .= implode(',', $fields).')';

@@ -1,5 +1,6 @@
 <?php
 namespace Test;
+define('STARTED_AT', microtime(true));
 
 chdir(dirname(__FILE__));
 include('../src/MySQL/Database.php');
@@ -8,13 +9,18 @@ include('../src/MySQL/Request.php');
 include('../src/MySQL/Parser.php');
 include('../src/MySQL/Mapper.php');
 
+class Request extends \Syra\MySQL\Request {
+    const
+        OBJECTS_NAMESPACE = '\\Test';
+}
+
 class Database extends \Syra\MySQL\Database {
     private static
         $instance;
 
     public static function get() {
 		if(is_null(self::$instance)) {
-			self::$instance= new self('localhost', 'root', 'droaspoe');
+			self::$instance= new self('localhost', 'root', '');
 			self::$instance->connect();
         }
 
@@ -43,7 +49,14 @@ class User extends \Syra\MySQL\Object {
         $name;
 }
 
-$request = \Syra\MySQL\Request::get('\Test\User')->withFields('id', 'name');
+$request = Request::get('User')->withFields('id', 'name');
 $tasks = Mapper::mapAsObjects($request);
 
 print_r($tasks);
+
+
+
+$duration = microtime(true) - STARTED_AT;
+print("\n".'Duration: '.$duration);
+print("\n".'Memory: '.memory_get_peak_usage());
+print("\n");

@@ -72,7 +72,7 @@ class Parser {
 
 	private function setTables() {
 		$rootTable = $this->request->tables[0];
-		$this->stmt .= "\n".'FROM `'.$rootTable->myTable().'` T0';
+		$this->stmt .= "\n".'FROM '.$rootTable::myTable().' T0';
 
 		foreach($this->request->links as $table => $links) {
 			foreach($links as $link) {
@@ -88,7 +88,7 @@ class Parser {
 
 				$object = $this->request->tables[$link['table']];
 
-				$this->stmt .= '`'.$object->myTable().'` T'.$link['table'];
+				$this->stmt .= $object::myTable().' T'.$link['table'];
 				$this->stmt .= ' ON (T'.$table.'.`'.$link['originField'].'`=T'.$link['table'].'.`'.$link['destinationField'].'`';
 				$this->tableJoinCondition($link['table']);
 				$this->stmt .= ')';
