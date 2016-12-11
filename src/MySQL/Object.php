@@ -2,10 +2,25 @@
 namespace Syra\MySQL;
 
 abstract class Object {
-	protected
-		$__inDatabase = false,
+	private
+		$__inDatabase = false, // TODO review naming
 		$__nulled = Array(),
 		$__collections = Array();
+
+    final public static function hasProperty($property) {
+		return isset(static::$properties[$property]);
+	}
+
+    final public static function getPropertyClass($property) {
+		// DEBUG if(empty(static::$properties[$property])) {
+		// DEBUG 	throw new \Exception('Property not defined');
+		// DEBUG }
+		return static::$properties[$property]['class'];
+	}
+
+	final public static function myTable() {
+		return '`'.static::DATABASE_SCHEMA.'`.`'.static::DATABASE_TABLE.'`';
+	}
 
 	public function __isset($property) {
 		return property_exists($this, $property) || isset($this->__collections[$property]);
@@ -95,26 +110,11 @@ abstract class Object {
 		}
 	}
 
-	public function getPropertyClass($property) {
-		// DEBUG if(empty(static::$properties[$property])) {
-		// DEBUG 	throw new \Exception('Property not defined');
-		// DEBUG }
-		return static::$properties[$property]['class'];
-	}
-
-	final public static function myTable() {
-		return '`'.static::DATABASE_SCHEMA.'`.`'.static::DATABASE_TABLE.'`';
-	}
-
-	final public function myClass() {
-		return get_class($this);
-	}
-
-	final public function isSaved() {
+	final public function isSaved() { // TODO review naming
 		return $this->__inDatabase;
 	}
 
-	final public function setSaved($bool = true) {
+	final public function setSaved($bool = true) { // TODO review naming
 		$this->__inDatabase = (Boolean) $bool;
 	}
 
@@ -162,7 +162,6 @@ abstract class Object {
 	public function delete() {
 		if($this->isSaved()) {
 			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
-            $database = ${static::DATABASE_CLASS}::get();
             $database->writer->query($stmt); // TODO how do we get writer database access in current model
 			$this->setSaved(false);
 		}
