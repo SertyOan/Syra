@@ -4,19 +4,19 @@ namespace Syra\MySQL;
 class Parser {
 	private
 		$request,
-		$stmt = '';
+		$statement = '';
 
 	public static function parse(Request &$request) {
 		$parser = new self($request);
 		$parser->parseToSQL();
-		return $parser->stmt;
+		return $parser->statement;
 	}
 
 	public static function count(Model_Request &$request) {
 		$parser = new self($request);
 		$parser->parseToCount();
-		// DEBUG debug('request object parsing result : '.$parser->stmt);
-		$data = Model_Database::get()->queryRows($parser->stmt);
+		// DEBUG debug('request object parsing result : '.$parser->statement);
+		$data = Model_Database::get()->queryRows($parser->statement);
 		return ((Integer) $data[0]['C']);
 	}
 
@@ -37,17 +37,17 @@ class Parser {
 			$this->setLimit();
 		}
 
-		// DEBUG debug('request object parsing result : '.$this->stmt);
+		// DEBUG debug('request object parsing result : '.$this->statement);
 	}
 
 	private function parseToCount() {
-		$this->stmt .= 'SELECT COUNT(';
+		$this->statement .= 'SELECT COUNT(';
 
 		if($this->request->distinctLines) {
-			$this->stmt .= 'DISTINCT ';
+			$this->statement .= 'DISTINCT ';
 		}
 		
-		$this->stmt .= ' T0.id) AS C';
+		$this->statement .= ' T0.id) AS C';
 		$this->setTables();
 		$this->setWhereClause();
 	}
@@ -61,52 +61,52 @@ class Parser {
 			}
 		}
 
-		$this->stmt .= 'SELECT ';
+		$this->statement .= 'SELECT ';
 
 		if($this->request->distinctLines) {
-			$this->stmt .= 'DISTINCT ';
+			$this->statement .= 'DISTINCT ';
 		}
 
-		$this->stmt .= implode(',', $selectedFields);
+		$this->statement .= implode(',', $selectedFields);
 	}
 
 	private function setTables() {
-		$rootTable = $this->request->tables[0];
-		$this->stmt .= "\n".'FROM '.$rootTable::myTable().' T0';
+		$rootTable = $this->request->classes[0];
+		$this->statement .= "\n".'FROM '.$rootTable::myTable().' T0';
 
 		foreach($this->request->links as $table => $links) {
 			foreach($links as $link) {
 				if($link['joinType'] == Request::LEFT_JOIN) {
-					$this->stmt .= "\n".'LEFT JOIN ';
+					$this->statement .= "\n".'LEFT JOIN ';
 				}
 				else if($link['joinType'] == Request::INNER_JOIN) {
-					$this->stmt .= "\n".'INNER JOIN ';
+					$this->statement .= "\n".'INNER JOIN ';
 				}
 				else {
-					throw new Exception('CodeError::no join type defined');
+					throw new \Exception('CodeError::no join type defined');
 				}
 
 				$object = $this->request->tables[$link['table']];
 
-				$this->stmt .= $object::myTable().' T'.$link['table'];
-				$this->stmt .= ' ON (T'.$table.'.`'.$link['originField'].'`=T'.$link['table'].'.`'.$link['destinationField'].'`';
+				$this->statement .= $object::myTable().' T'.$link['table'];
+				$this->statement .= ' ON (T'.$table.'.`'.$link['originField'].'`=T'.$link['table'].'.`'.$link['destinationField'].'`';
 				$this->tableJoinCondition($link['table']);
-				$this->stmt .= ')';
+				$this->statement .= ')';
 			}
 		}
 	}
 
 	private function tableJoinCondition($index) {
 		if(isset($this->request->conditions[$index]) && sizeof($this->request->conditions[$index]) != 0) {
-			$this->stmt .= ' AND (';
+			$this->statement .= ' AND (';
 			$this->setConditions($this->request->conditions[$index]);
-			$this->stmt .= ')';
+			$this->statement .= ')';
 		}
 	}
 
 	private function setWhereClause() {
 		if(sizeof($this->request->resultsConditions) != 0) {
-			$this->stmt .= "\n".'WHERE ';
+			$this->statement .= "\n".'WHERE ';
 			$this->setConditions($this->request->resultsConditions);
 		}
 	}
@@ -118,16 +118,16 @@ class Parser {
 			$field = $condition['field'];
 
 			if($condition['closeGroup'] === true) {
-				$this->stmt .= ')';
+				$this->statement .= ')';
 				--$openedGroups;
 			}
 
 			if(!is_null($condition['logic'])) {
-				$this->stmt .= ' '.$condition['logic'].' ';
+				$this->statement .= ' '.$condition['logic'].' ';
 			}
 
 			if($condition['openGroup'] === true) {
-				$this->stmt .= '(';
+				$this->statement .= '(';
 				++$openedGroups;
 			}
 
@@ -157,14 +157,14 @@ class Parser {
 				$value = $condition['value'];
 			}
 
-			$this->stmt .= $this->translateOperator('T'.$condition['table'].'.`'.$condition['field'].'`', $condition['operator'], $value);
+			$this->statement .= $this->translateOperator('T'.$condition['table'].'.`'.$condition['field'].'`', $condition['operator'], $value);
 		}
 
-		$this->stmt .= str_repeat(')', $openedGroups);
+		$this->statement .= str_repeat(')', $openedGroups);
 	}
 
 	private function setOrderByClause() {
-		$this->stmt .= "\n".'ORDER BY ';
+		$this->statement .= "\n".'ORDER BY ';
 		$orders = Array();
 
 		foreach($this->request->orderBy as $clause) {
@@ -183,11 +183,11 @@ class Parser {
 			}
 		}
 
-		$this->stmt .= implode(',', $orders);
+		$this->statement .= implode(',', $orders);
 	}
 
 	private function setLimit() {
-		$this->stmt .= "\n".'LIMIT '.$this->request->offset.','.$this->request->lines;
+		$this->statement .= "\n".'LIMIT '.$this->request->offset.','.$this->request->lines;
 	}
 
 	private function translateOperator($field, $operator, $value) {
@@ -260,7 +260,7 @@ class Parser {
 				}
 				break;
 			default:
-				throw new Exception('CodeError::invalid operator');
+				throw new \Exception('CodeError::invalid operator');
 		}
 
 		return $clause;
