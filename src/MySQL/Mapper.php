@@ -43,16 +43,13 @@ abstract class Mapper {
 
     private function __construct(Request $request) {
         $this->request = $request;
-
         $class = static::DATABASE_CLASS;
-        $this->database = $class::get();
-        // TODO check database implements reader/writer methods
+        $this->database = $class::getReader();
     }
 
     private function mapRequest() {
         $lastIndex = null;
         $statement = Parser::parse($this->request);
-        $rows = $this->database->queryRows($statement);
 		$result = $this->database->query($statement);
 
         while($line = $result->fetch_assoc()) {
@@ -125,7 +122,7 @@ abstract class Mapper {
                             }
                             else {
                                 // DEBUG if(empty($link['alias'])) {
-                                // DEBUG     throw new Exception('CodeError::alias is not set');
+                                // DEBUG     throw new \Exception('Alias is not set');
                                 // DEBUG }
 
                                 $this->pathes[$destination][] = 'linked'.$link['alias'].'-'.$destination;
