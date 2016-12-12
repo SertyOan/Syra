@@ -71,35 +71,34 @@ class Parser {
 	}
 
 	private function setTables() {
-		$rootTable = $this->request->classes[0];
-		$this->statement .= "\n".'FROM '.$rootTable::myTable().' T0';
+		$root = $this->request->classes[0];
+		$this->statement .= "\n".'FROM '.$root::myTable().' T0';
 
-		foreach($this->request->links as $table => $links) {
-			foreach($links as $link) {
-				if($link['joinType'] == Request::LEFT_JOIN) {
-					$this->statement .= "\n".'LEFT JOIN ';
-				}
-				else if($link['joinType'] == Request::INNER_JOIN) {
-					$this->statement .= "\n".'INNER JOIN ';
-				}
-				else {
-					throw new \Exception('CodeError::no join type defined');
-				}
+		foreach($this->request->links as $rightTableIndex => $link) {
+            print_r($link);
+            if($link['joinType'] == Request::LEFT_JOIN) {
+                $this->statement .= "\n".'LEFT JOIN ';
+            }
+            else if($link['joinType'] == Request::INNER_JOIN) {
+                $this->statement .= "\n".'INNER JOIN ';
+            }
+            else {
+                throw new \Exception('CodeError::no join type defined');
+            }
 
-				$object = $this->request->tables[$link['table']];
+            $rightClass = $this->request->classes[$rightTableIndex];
 
-				$this->statement .= $object::myTable().' T'.$link['table'];
-				$this->statement .= ' ON (T'.$table.'.`'.$link['originField'].'`=T'.$link['table'].'.`'.$link['destinationField'].'`';
-				$this->tableJoinCondition($link['table']);
-				$this->statement .= ')';
-			}
+            $this->statement .= $rightClass::myTable().' T'.$rightTableIndex;
+            $this->statement .= ' ON (T'.$link['leftTableIndex'].'.`'.$link['leftTableField'].'`=T'.$rightTableIndex.'.`'.$link['rightTableField'].'`';
+            $this->tableJoinCondition($rightTableIndex);
+            $this->statement .= ')';
 		}
 	}
 
 	private function tableJoinCondition($index) {
-		if(isset($this->request->conditions[$index]) && sizeof($this->request->conditions[$index]) != 0) {
+		if(isset($this->request->linksConditions[$index]) && sizeof($this->request->linksConditions[$index]) != 0) {
 			$this->statement .= ' AND (';
-			$this->setConditions($this->request->conditions[$index]);
+			$this->setConditions($this->request->linksConditions[$index]);
 			$this->statement .= ')';
 		}
 	}
@@ -134,7 +133,7 @@ class Parser {
 			$value = '';
 
 			if($condition['value'] !== false && !is_array($condition['value'])) {
-				switch($this->request->tables[$condition['table']]->getPropertyClass($field)) {
+				switch($this->request->classes[$condition['table']]->getPropertyClass($field)) {
 					case 'String':
 					case 'JSON':
 						$value = "'".Model_Database::get()->escapeString($condition['value'])."'";

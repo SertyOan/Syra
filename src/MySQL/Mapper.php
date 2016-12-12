@@ -50,21 +50,22 @@ abstract class Mapper {
     private function mapRequest() {
         $lastIndex = null;
         $statement = Parser::parse($this->request);
-		$result = $this->database->query($statement);
+        $result = $this->database->query($statement);
 
         while($line = $result->fetch_assoc()) {
-            for($i = 0, $c = sizeof($this->request->tables); $i < $c; $i++) {
+            for($i = 0, $c = sizeof($this->request->classes); $i < $c; $i++) {
                 if(sizeof($this->request->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
                     continue;
                 }
 
-                $class = $this->request->tables[$i];
-                $object = new $class;
-                $object->map($line, 'T'.$i);
-                $objectID = $object->id;
+                $objectID = $line['T'.$i.'_id'];
 
                 if($i === 0) {
                     if(!isset($this->objects[$objectID])) {
+                        $class = $this->request->classes[$i];
+                        $object = new $class;
+                        $object->map($line, 'T'.$i);
+
                         $this->objects[$objectID] = $object;
                     }
                 }
@@ -73,29 +74,35 @@ abstract class Mapper {
                     $target =& $this->objects[$line['T0_id']];
 
                     for($j = sizeof($this->pathes[$i]) - 1; $j >= 0; $j--) {
-                        list($step, $tableID) = explode('-', $this->pathes[$i][$j]);
+                        list($step, $tableIndex) = $this->pathes[$i][$j];
 
                         if($j !== 0) {
                             $target =& $target->$step;
 
                             if(preg_match('/^my/', $step)) {
-                                $stepID = $line['T'.$tableID.'_id'];
-                                $target =& $target->at($stepID);
+                                $stepID = $line['T'.$tableIndex.'_id'];
 
-                                if($target === false) { // NOTE should never happen and is not possible "a priori"
-                                    throw new Exception('CodeError::could not find parent object');
+                                if(!isset($target[$stepID])) {
+                                    throw new Exception('Could not find parent object');
                                 }
+
+                                $target =& $target[$stepID];
                             }
                         }
                         else { // NOTE here we place the object if needed
-                            if($target->$step instanceof OsyLib_Collection) {
-                                $found = $target->$step->at($objectID);
+                            if(preg_match('/^my/', $step)) {
+                                if(!isset($target->{$step}[$objectID])) {
+                                    $class = $this->request->classes[$i];
+                                    $object = new $class;
+                                    $object->map($line, 'T'.$i);
 
-                                if($found === false) {
-                                    $target->$step->putAt($object, $objectID);
+                                    $target->{$step}[$objectID] = $object;
                                 }
                             }
-                            else if(!$target->$step->isSaved()) {
+                            else if(!$target->{$step}->isSaved()) {
+                                $class = $this->request->classes[$i];
+                                $object = new $class;
+                                $object->map($line, 'T'.$i);
                                 $target->$step = $object;
                             }
                         }
@@ -107,36 +114,28 @@ abstract class Mapper {
         return $this->objects;
     }
 
-    private function linkToRootClass($destination) {
-        if(empty($this->pathes[$destination])) {
-            $this->pathes[$destination] = Array();
+    private function linkToRootClass($rightTableIndex) {
+        if(empty($this->pathes[$rightTableIndex])) {
+            $this->pathes[$rightTableIndex] = Array();
 
-            if(sizeof($this->request->fields[$destination]) !== 0) {
-                foreach($this->request->links as $source => $links) {
-                    foreach($links as $link) {
-                        if($link['table'] === $destination) {
-                            $linkField = $link['originField'];
+            $link = $this->request->links[$rightTableIndex];
+            $leftTableIndex = $link['leftTableIndex'];
 
-                            if(isset($this->request->tables[$source]->$linkField) && $this->request->tables[$source]->$linkField instanceof Object) {
-                                $this->pathes[$destination][] = $linkField.'-'.$destination;
-                            }
-                            else {
-                                // DEBUG if(empty($link['alias'])) {
-                                // DEBUG     throw new \Exception('Alias is not set');
-                                // DEBUG }
+            $linkField = $link['leftTableField'];
+            $class = $this->request->classes[$leftTableIndex];
 
-                                $this->pathes[$destination][] = 'linked'.$link['alias'].'-'.$destination;
-                            }
+            if(!empty($link['alias'])) {
+                $this->pathes[$rightTableIndex][] = Array('my'.$link['alias'], $rightTableIndex);
+            }
+            else {
+                $this->pathes[$rightTableIndex][] = Array($linkField, $rightTableIndex);
+            }
 
-                            if($source !== 0) {
-                                $this->linkToRootClass($source);
+            if($link['leftTableIndex'] !== 0) {
+                $this->linkToRootClass($leftTableIndex);
 
-                                foreach($this->pathes[$source] as $step) {
-                                    $this->pathes[$destination][] = $step;
-                                }
-                            }
-                        }
-                    }
+                foreach($this->pathes[$leftTableIndex] as $step) {
+                    $this->pathes[$rightTableIndex][] = $step;
                 }
             }
         }

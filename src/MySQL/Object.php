@@ -45,7 +45,7 @@ abstract class Object {
 					case 'Timestamp': $this->$property = $value instanceof \DateTime ? $value : new \DateTime('@'.((Integer) $value)); break;
 					default:
 						if(is_object($value)) {
-							if(get_class($value) !== $class) {
+							if(!($value instanceof $class)) {
 								throw new \Exception('Property '.$property.' set with wrong class for '.get_called_class());
 							}
 
@@ -78,7 +78,7 @@ abstract class Object {
 		}
 	}
 
-	public function __get($property) {
+	public function &__get($property) {
 		if(isset(static::$properties[$property])) {
 			if(is_null($this->{$property})) {
 				$class = static::$properties[$property]['class'];
