@@ -1,0 +1,7 @@
+{
+    "name": "SertyOan/Syra",
+    "type": "library",
+    "require": {
+        "php": ">=5.4.0"
+    }
+}

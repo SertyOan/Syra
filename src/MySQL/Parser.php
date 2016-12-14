@@ -20,8 +20,8 @@ class Parser {
 		return ((Integer) $data[0]['C']);
 	}
 
-	private function __construct(Request &$request) {
-		$this->request =& $request;
+	private function __construct(Request $request) {
+		$this->request = $request;
 	}
 
 	private function parseToSQL() {
@@ -75,7 +75,6 @@ class Parser {
 		$this->statement .= "\n".'FROM '.$root::myTable().' T0';
 
 		foreach($this->request->links as $rightTableIndex => $link) {
-            print_r($link);
             if($link['joinType'] == Request::LEFT_JOIN) {
                 $this->statement .= "\n".'LEFT JOIN ';
             }
@@ -96,44 +95,52 @@ class Parser {
 	}
 
 	private function tableJoinCondition($index) {
-		if(isset($this->request->linksConditions[$index]) && sizeof($this->request->linksConditions[$index]) != 0) {
+        $conditions = $this->request->links[$index]['conditions'];
+
+        if(sizeof($conditions) !== 0) {
 			$this->statement .= ' AND (';
-			$this->setConditions($this->request->linksConditions[$index]);
+			$this->setConditions($conditions);
 			$this->statement .= ')';
 		}
 	}
 
 	private function setWhereClause() {
-		if(sizeof($this->request->resultsConditions) != 0) {
+		if(sizeof($this->request->conditions) != 0) {
 			$this->statement .= "\n".'WHERE ';
-			$this->setConditions($this->request->resultsConditions);
+			$this->setConditions($this->request->conditions);
 		}
 	}
 
 	private function setConditions($conditions) {
-		$openedGroups = 0;
+		$opened = 0;
 
 		foreach($conditions as $condition) {
 			$field = $condition['field'];
 
-			if($condition['closeGroup'] === true) {
+			if($condition['close'] === true) {
+                if($opened === 0) {
+                    throw new Exception('Cannot close not opened parenthesis');
+                }
+
 				$this->statement .= ')';
-				--$openedGroups;
+				$opened--;
 			}
 
-			if(!is_null($condition['logic'])) {
+			if(!empty($condition['logic'])) {
 				$this->statement .= ' '.$condition['logic'].' ';
 			}
 
-			if($condition['openGroup'] === true) {
+			if($condition['open'] === true) {
 				$this->statement .= '(';
-				++$openedGroups;
+				$opened++;
 			}
 
 			$value = '';
 
 			if($condition['value'] !== false && !is_array($condition['value'])) {
-				switch($this->request->classes[$condition['table']]->getPropertyClass($field)) {
+                $class = $this->request->classes[$condition['table']];
+
+				switch($class::getPropertyClass($field)) {
 					case 'String':
 					case 'JSON':
 						$value = "'".Model_Database::get()->escapeString($condition['value'])."'";
@@ -159,7 +166,7 @@ class Parser {
 			$this->statement .= $this->translateOperator('T'.$condition['table'].'.`'.$condition['field'].'`', $condition['operator'], $value);
 		}
 
-		$this->statement .= str_repeat(')', $openedGroups);
+		$this->statement .= str_repeat(')', $opened);
 	}
 
 	private function setOrderByClause() {

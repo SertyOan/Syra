@@ -10,14 +10,12 @@ abstract class Request {
         OPTION_YEAR = 4;
 
     private
-        $operatorTarget,
         $classes = Array(),
         $index = Array(),
         $fields = Array(),
         $orderBy = Array(),
         $links = Array(),
-        $linksConditions = Array(),
-        $resultsConditions = Array(),
+        $conditions = Array(),
         $distinctLines = false,
         $offset = 0,
         $lines = 0;
@@ -130,90 +128,79 @@ abstract class Request {
 
         $this->links[$index] = Array(
             'joinType' => ($strictly ? self::INNER_JOIN : self::LEFT_JOIN),
-            'alias' => $alias
+            'alias' => $alias,
+            'conditions' => Array()
         );
         return $this;
     }
 
-    private function joinCondition($logic, $field, $operator, $value, $option, $openGroup, $closeGroup) {
+    public function with($logic, $field, $operator, $value, $option) {
         // DEBUG if(sizeof($this->classes) <= 1) {
-        // DEBUG     throw new Exception('CodeError::valid for linked tables only');
-        // DEBUG }
-
-        // DEBUG if(!isset(end($this->classes)->$field)) {
-        // DEBUG     throw new Exception('Bug::property '.$field.' does not exist');
+        // DEBUG     throw new Exception('No class linked yet');
         // DEBUG }
 
         $index = sizeof($this->classes) - 1;
-        $this->conditions[$index][] = Array(
-            'table' => $index,
+
+        // DEBUG $class = $this->classes[$index];
+
+        // DEBUG if(!$class::hasProperty($field)) {
+        // DEBUG     throw new Exception('Field does not exists');
+        // DEBUG }
+
+        $conditions =& $this->links[$index]['conditions'];
+
+        if(sizeof($conditions) === 0) {
+            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+                throw new Exception('Invalid logic operator');
+            }
+
+            $logic = null;
+            $close = false;
+            $open = !empty($matches[2]);
+        }
+        else {
+            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+                throw new Exception('Invalid logic operator');
+            }
+    
+            $logic = $matches[2];
+            $close = !empty($matches[1]);
+            $open = !empty($matches[3]);
+        }
+
+        $conditions[] = Array(
             'logic' => $logic,
+            'table' => $index,
             'field' => $field,
             'operator' => $operator,
             'value' => $value,
             'option' => $option,
-            'openGroup' => $openGroup,
-            'closeGroup' => $closeGroup
+            'open' => $open,
+            'close' => $close
         );
+
         return $this;
     }
 
-    public function with($field, $operator, $value = false, $option = false) {
-        // DEBUG if(isset($this->conditions[sizeof($this->classes) - 1])) {
-        // DEBUG     throw new Exception('CodeError::condition already set');
-        // DEBUG }
+    public function where($logic, $table, $field, $operator, $value = null, $option = null) {
+        if(sizeof($this->conditions) === 0) {
+            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+                throw new Exception('Invalid logic operator');
+            }
 
-        return $this->joinCondition(null, $field, $operator, $value, $option, false, false);
-    }
-
-    public function withInGroup($field, $operator, $value = false, $option = false) {
-        // DEBUG if(isset($this->conditions[sizeof($this->classes) - 1])) {
-        // DEBUG     throw new Exception('CodeError::condition already set');
-        // DEBUG }
-
-        return $this->joinCondition(null, $field, $operator, $value, $option, true, false);
-    }
-
-    public function andWith($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('AND', $field, $operator, $value, $option, false, false);
-    }
-
-    public function orWith($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('OR', $field, $operator, $value, $option, false, false);
-    }
-
-    public function andWithInGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('AND', $field, $operator, $value, $option, true, false);
-    }
-
-    public function orWithInGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('OR', $field, $operator, $value, $option, true, false);
-    }
-
-    public function andWithNotInGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('AND', $field, $operator, $value, $option, false, true);
-    }
-
-    public function orWithNotInGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('OR', $field, $operator, $value, $option, false, true);
-    }
-
-    public function andWithInNewGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('AND', $field, $operator, $value, $option, true, true);
-    }
-
-    public function orWithInNewGroup($field, $operator, $value = false, $option = false) {
-        return $this->joinCondition('OR', $field, $operator, $value, $option, true, true);
-    }
-
-    public function where($table, $field, $operator, $value = null, $option = null) {
-        $this->operatorTarget =& $this->resultsConditions;
-
-        // DEBUG $last = end($this->resultsConditions);
-
-        // DEBUG if($last !== false && $last['type'] === self::CONDITION) {
-        // DEBUG     throw new \Exception('Cannot call where method now');
-        // DEBUG }
+            $logic = null;
+            $close = false;
+            $open = !empty($matches[2]);
+        }
+        else {
+            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+                throw new Exception('Invalid logic operator');
+            }
+    
+            $logic = $matches[2];
+            $close = !empty($matches[1]);
+            $open = !empty($matches[3]);
+        }
 
         // DEBUG if(!isset($this->index[$table])) {
         // DEBUG     throw new Exception('Invalid table');
@@ -227,34 +214,13 @@ abstract class Request {
         // DEBUG     throw new Exception('CodeError::property '.$field.' does not exists');
         // DEBUG }
 
-        $this->resultsConditions[] = Array(
-            'type' => self::CONDITION,
+        $this->conditions[] = Array(
+            'logic' => $logic,
             'table' => $index,
             'field' => $field,
             'operator' => $operator,
             'value' => $value,
-            'option' => $option
-        );
-
-        return $this;
-    }
-
-    public function operator($operator) {
-        // DEBUG $last = end($this->operatorTarget);
-        // DEBUG if($last === false || $last['type'] === self::OPERATOR) {
-        // DEBUG     throw new \Exception('Cannot call operator method now');
-        // DEBUG }
-
-        if(preg_match('/^(\) )?(AND|OR)( \()?$/', $operator, $matches) === false) {
-            throw new Exception('Invalid logic operator');
-        }
-
-        $close = $matches[1] === ') ';
-        $open = $matches[3] === ' (';
-
-        $this->operatorTarget[] = Array(
-            'type' => self::OPERATOR,
-            'operator' => $matches[2],
+            'option' => $option,
             'close' => $close,
             'open' => $open
         );

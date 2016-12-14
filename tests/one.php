@@ -95,7 +95,9 @@ class Access extends \Syra\MySQL\Object {
 
 $request = Request::get('User')->withFields('id', 'name')
     ->leftJoin('Access', 'Accesses')->on('User', 'id', 'user')->withFields('id')
-    ->leftJoin('Group')->on('Access', 'group')->withFields('id', 'name');
+    ->leftJoin('Group')->on('Access', 'group')->withFields('id', 'name')
+    ->where('', 'User', 'id', '=', 1)
+    ->where('OR', 'User', 'id', '=', 2);
 $tasks = Mapper::mapAsObjects($request);
 
 print_r($tasks);
