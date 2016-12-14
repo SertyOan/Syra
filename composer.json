@@ -1,5 +1,5 @@
 {
-    "name": "SertyOan/Syra",
+    "name": "osyra/syra",
     "type": "library",
     "require": {
         "php": ">=5.4.0"
