@@ -248,6 +248,7 @@ abstract class Mapper {
 
 	private function generateSQLConditions($conditions) {
 		$opened = 0;
+        $sql = '';
 
 		foreach($conditions as $condition) {
 			$field = $condition['field'];
