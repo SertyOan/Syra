@@ -92,6 +92,12 @@ class Database {
         return $data;
     }
 
+	public function escapeString($string) {
+        $this->checkConnection();
+
+		return $this->link->real_escape_string($string);
+	}
+
     public function commit() {
         $this->checkConnection();
 
