@@ -169,7 +169,8 @@ abstract class Object {
 	}
 
 	public function save() {
-        $database = ${static::DATABASE_CLASS}::get()->writer;
+        $class = static::DATABASE_CLASS;
+        $database = $class::getWriter();
 		$fields = Array();
 
 		foreach(static::$properties as $property => $description) {
