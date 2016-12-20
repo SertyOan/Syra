@@ -14,7 +14,7 @@ abstract class Mapper {
     }
 
     public static function mapAsObject(Request $request) {
-        $records = self::map($request);
+        $records = self::mapAsObjects($request);
         return end($records);
     }
 
@@ -23,7 +23,7 @@ abstract class Mapper {
     }
 
     public static function mapAsArray(Request $request) {
-        $object = self::mapObject($request);
+        $object = self::mapAsObject($request);
         return $object instanceof Object ? $object->asArray() : $object;
     }
 
