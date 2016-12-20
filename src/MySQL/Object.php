@@ -12,9 +12,10 @@ abstract class Object {
 	}
 
     final public static function getPropertyClass($property) {
-		// DEBUG if(empty(static::$properties[$property])) {
-		// DEBUG 	throw new \Exception('Property not defined');
-		// DEBUG }
+		if(empty(static::$properties[$property])) {
+            throw new \Exception('Property not defined');
+		}
+
 		return static::$properties[$property]['class'];
 	}
 
@@ -168,6 +169,7 @@ abstract class Object {
 	}
 
 	public function save() {
+        $database = ${static::DATABASE_CLASS}::get()->writer;
 		$fields = Array();
 
 		foreach(static::$properties as $property => $description) {
@@ -186,10 +188,10 @@ abstract class Object {
 					case 'Float': $fields['`'.$property.'`'] = (Float) $this->$property; break;
 					case 'String':
 						if(isset($description['maxLength'])) {
-							$fields['`'.$property.'`'] = "'".Model_Database::get()->escapeString(substr($this->$property, 0, $description['maxLength']))."'";
+							$fields['`'.$property.'`'] = "'".$database->escapeString(substr($this->$property, 0, $description['maxLength']))."'";
 						}
 						else {
-							$fields['`'.$property.'`'] = "'".Model_Database::get()->escapeString($this->$property)."'";
+							$fields['`'.$property.'`'] = "'".$database->escapeString($this->$property)."'";
 						}
 						break;
 					case 'DateTime':
@@ -226,9 +228,6 @@ abstract class Object {
 			$stmt .= implode(',', $fields).')';
 		}
 
-		// DEBUG debug('saving object : '.$stmt);
-
-        $database = ${static::DATABASE_CLASS}::get()->writer;
         $database->query($stmt);
 
 		if(!$this->isSaved() && is_null($this->id)) {
