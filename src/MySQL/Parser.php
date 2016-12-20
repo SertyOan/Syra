@@ -4,24 +4,26 @@ namespace Syra\MySQL;
 class Parser {
 	private
 		$request,
+        $database,
 		$statement = '';
 
-	public static function parse(Request &$request) {
+	public static function parse(Request $request) {
 		$parser = new self($request);
 		$parser->parseToSQL();
 		return $parser->statement;
 	}
 
-	public static function count(Model_Request &$request) {
+	public static function count(Request $request) {
 		$parser = new self($request);
 		$parser->parseToCount();
-		// DEBUG debug('request object parsing result : '.$parser->statement);
-		$data = Model_Database::get()->queryRows($parser->statement);
+		$data = $parser->database->queryRows($parser->statement);
 		return ((Integer) $data[0]['C']);
 	}
 
 	private function __construct(Request $request) {
 		$this->request = $request;
+        $class = static::DATABASE_CLASS;
+        $this->database = $class::getReader();
 	}
 
 	private function parseToSQL() {
@@ -36,8 +38,6 @@ class Parser {
 		if($this->request->lines !== 0 || $this->request->offset !== 0) {
 			$this->setLimit();
 		}
-
-		// DEBUG debug('request object parsing result : '.$this->statement);
 	}
 
 	private function parseToCount() {
@@ -143,7 +143,7 @@ class Parser {
 				switch($class::getPropertyClass($field)) {
 					case 'String':
 					case 'JSON':
-						$value = "'".Model_Database::get()->escapeString($condition['value'])."'";
+						$value = "'".$this->database->escapeString($condition['value'])."'";
 						break;
 					case 'Integer':
 					case 'Timestamp':
@@ -153,7 +153,7 @@ class Parser {
 						$value = (Float) str_replace(',', '.', $condition['value']);
 						break;
 					case 'DateTime':
-						$value = "'".Model_Database::get()->escapeString($condition['value'])."'";
+						$value = "'".$this->database->escapeString($condition['value'])."'";
 						break;
 					default:
 						$value = (Integer) $condition['value'];
@@ -241,7 +241,7 @@ class Parser {
 				if(is_array($value) && sizeof($value) != 0) {
 					if(is_string($value[0])) {
 						foreach($value as $key => $val) {
-							$value[$key] = "'".Model_Database::get()->escapeString($val)."'";
+							$value[$key] = "'".$this->database->escapeString($val)."'";
 						}
 					}
 
@@ -255,7 +255,7 @@ class Parser {
 				if(is_array($value) && sizeof($value) != 0) {
 					if(is_string($value[0])) {
 						foreach($value as $key => $val) {
-							$value[$key] = "'".Model_Database::get()->escapeString($val)."'";
+							$value[$key] = "'".$this->database->escapeString($val)."'";
 						}
 					}
 
