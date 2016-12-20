@@ -7,7 +7,6 @@ include('../src/DatabaseInterface.php');
 include('../src/MySQL/Database.php');
 include('../src/MySQL/Object.php');
 include('../src/MySQL/Request.php');
-include('../src/MySQL/Parser.php');
 include('../src/MySQL/Mapper.php');
 
 class Request extends \Syra\MySQL\Request {
