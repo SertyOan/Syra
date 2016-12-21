@@ -26,7 +26,7 @@ abstract class Mapper {
     }
 
     public static function mapAsArrays(Request $request) {
-        return self::objectsAsArrays(self::map($request));
+        return self::objectsAsArrays(self::mapAsObjects($request));
     }
 
     public static function mapAsArray(Request $request) {
