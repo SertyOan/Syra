@@ -312,13 +312,13 @@ abstract class Mapper {
 
 		foreach($this->request->orderBy as $clause) {
 			switch($clause['option']) {
-				case Request::DAY:
+				case Request::OPTION_DAY:
 					$orders[] = 'DAY(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
-				case Request::MONTH:
+				case Request::OPTION_MONTH:
 					$orders[] = 'MONTH(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
-				case Request::YEAR:
+				case Request::OPTION_YEAR:
 					$orders[] = 'YEAR(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
 					break;
 				default:
@@ -371,9 +371,6 @@ abstract class Mapper {
 				break;
 			case 'LIKE':
 				$clause = $field.' LIKE '.$value;
-				break;
-			case Model_Request::LIKE_CI: // TODO
-				$clause = 'UPPER('.$field.') LIKE UPPER('.$value.')';
 				break;
 			case 'IN':
 				if(is_array($value) && sizeof($value) != 0) {
