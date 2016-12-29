@@ -7,11 +7,14 @@ include('../src/DatabaseInterface.php');
 include('../src/MySQL/Database.php');
 include('../src/MySQL/Object.php');
 include('../src/MySQL/Request.php');
-include('../src/MySQL/Mapper.php');
 
 class Request extends \Syra\MySQL\Request {
     const
-        OBJECTS_NAMESPACE = '\\Test';
+        DATABASE_CLASS = '\Test\Database';
+
+    protected function buildClassFromTable($table) {
+        return '\\Test\\'.$table;
+    }
 }
 
 class Database implements \Syra\DatabaseInterface {
@@ -35,11 +38,6 @@ class Database implements \Syra\DatabaseInterface {
 
         return self::$reader;
     }
-}
-
-class Mapper extends \Syra\MySQL\Mapper {
-    const
-        DATABASE_CLASS = '\Test\Database';
 }
 
 class Group extends \Syra\MySQL\Object {
@@ -97,7 +95,7 @@ $request = Request::get('User')->withFields('id', 'name')
     ->leftJoin('Group')->on('Access', 'group')->withFields('id', 'name')
     ->where('', 'User', 'id', '=', 1)
     ->where('OR', 'User', 'id', '=', 2);
-$tasks = Mapper::mapAsObjects($request);
+$tasks = $request->mapAsObjects();
 
 print_r($tasks);
 
