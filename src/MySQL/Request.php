@@ -259,7 +259,7 @@ abstract class Request {
         $arrays = Array();
 
         foreach($objects as $object) {
-            if(!($object instanceof Object)) {
+            if(!is_subclass_of($object, '\\Syra\\MySQL\\Object')) {
                 throw new \LogicException('Can only transform data objects to array');
             }
 
