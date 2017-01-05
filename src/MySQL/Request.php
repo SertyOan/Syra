@@ -32,6 +32,11 @@ abstract class Request {
         }
 
         $this->database = $class::getReader();
+
+        if(!($this->database instanceof Database)) {
+            throw new \Exception('Invalid reader database class');
+        }
+
         $this->addTable($table);
     }
 
@@ -39,8 +44,6 @@ abstract class Request {
 
     private function addTable($table) {
         $class = $this->buildClassFromTable($table);
-
-        print($class."\n");
 
         if(!is_subclass_of($class, '\\Syra\\MySQL\\Object')) {
             throw new \Exception('Class is not a child of Object');
@@ -358,7 +361,7 @@ abstract class Request {
         return $objects;
     }
 
-    private function linkToRootClass(&$pathes, $rightTableIndex) {
+    private function linkToRootClass(&$pathes, $rightTableIndex) { // TODO check if we cannot build $pathes during request build
         if(empty($pathes[$rightTableIndex])) {
             $pathes[$rightTableIndex] = Array();
 
