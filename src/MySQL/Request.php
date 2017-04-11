@@ -101,7 +101,7 @@ abstract class Request {
 
     public function on($leftTable, $leftTableField, $rightTableField = 'id') {
         // DEBUG if(!isset($this->index[$leftTable])) {
-        // DEBUG     throw new Exception('Invalid table');
+        // DEBUG     throw new \Exception('Invalid table');
         // DEBUG }
 
         $rightTableIndex = sizeof($this->classes) - 1;
@@ -135,7 +135,7 @@ abstract class Request {
     public function with($logic, $field, $operator, $value, $option) {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
         // DEBUG if(sizeof($this->classes) <= 1) {
-        // DEBUG     throw new Exception('No class linked yet');
+        // DEBUG     throw new \Exception('No class linked yet');
         // DEBUG }
 
         $index = sizeof($this->classes) - 1;
@@ -143,14 +143,14 @@ abstract class Request {
         // DEBUG $class = $this->classes[$index];
 
         // DEBUG if(!$class::hasProperty($field)) {
-        // DEBUG     throw new Exception('Field does not exists');
+        // DEBUG     throw new \Exception('Field does not exists');
         // DEBUG }
 
         $conditions =& $this->links[$index]['conditions'];
 
         if(sizeof($conditions) === 0) {
             if(preg_match('/^(\()?$/', $logic, $matches) === false) {
-                throw new Exception('Invalid logic operator');
+                throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
@@ -159,7 +159,7 @@ abstract class Request {
         }
         else {
             if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
-                throw new Exception('Invalid logic operator');
+                throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
@@ -184,7 +184,7 @@ abstract class Request {
     public function where($logic, $table, $field, $operator, $value = null, $option = null) {
         if(sizeof($this->conditions) === 0) {
             if(preg_match('/^(\()?$/', $logic, $matches) === false) {
-                throw new Exception('Invalid logic operator');
+                throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
@@ -193,7 +193,7 @@ abstract class Request {
         }
         else {
             if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
-                throw new Exception('Invalid logic operator');
+                throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
@@ -202,7 +202,7 @@ abstract class Request {
         }
 
         // DEBUG if(!isset($this->index[$table])) {
-        // DEBUG     throw new Exception('Invalid table');
+        // DEBUG     throw new \Exception('Invalid table');
         // DEBUG }
 
         $index = $this->index[$table];
@@ -210,7 +210,7 @@ abstract class Request {
         // DEBUG $class = $this->classes[$index];
 
         // DEBUG if(!$class::hasProperty($field)) {
-        // DEBUG     throw new Exception('CodeError::property '.$field.' does not exists');
+        // DEBUG     throw new \Exception('CodeError::property '.$field.' does not exists');
         // DEBUG }
 
         $this->conditions[] = Array(
@@ -330,7 +330,7 @@ abstract class Request {
                                 $stepID = $line['T'.$tableIndex.'_id'];
 
                                 if(!isset($target[$stepID])) {
-                                    throw new Exception('Could not find parent object');
+                                    throw new \Exception('Could not find parent object');
                                 }
 
                                 $target =& $target[$stepID];
@@ -498,7 +498,7 @@ abstract class Request {
 
 			if($condition['close'] === true) {
                 if($opened === 0) {
-                    throw new Exception('Cannot close not opened parenthesis');
+                    throw new \Exception('Cannot close not opened parenthesis');
                 }
 
 				$sql .= ')';
