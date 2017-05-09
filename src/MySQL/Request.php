@@ -16,6 +16,7 @@ abstract class Request {
         $orderBy = Array(),
         $links = Array(),
         $conditions = Array(),
+        $prepareBindings = Array(''),
         $distinctLines = false,
         $offset = 0,
         $lines = 0;
@@ -296,9 +297,35 @@ abstract class Request {
         $objects = Array();
         $pathes = Array();
         $lastIndex = null;
-        $statement = $this->generateDataSQL();
-        $result = $this->database->query($statement);
+        $query = $this->generateDataSQL();
+        $statement = $this->database->link->prepare($query);
 
+        if($statement === false) {
+            error_log($this->database->link->error);
+            throw new \Exception('Database error');
+        }
+
+        $bindings = Array();
+
+        foreach($this->prepareBindings as $key => $value) {
+            $bindings[] =& $this->prepareBindings[$key];
+        }
+
+        $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
+        $statement->execute();
+
+        if($success === false) {
+            error_log($this->database->link->error);
+            throw new \Exception('Database error');
+        }
+
+        $result = $statement->get_result();
+
+        if($result === false) {
+            error_log($this->database->link->error);
+            throw new \Exception('Database error');
+        }
+        
         while($line = $result->fetch_assoc()) {
             for($i = 0, $c = sizeof($this->classes); $i < $c; $i++) {
                 if(sizeof($this->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
@@ -358,6 +385,7 @@ abstract class Request {
             }
         }
 
+        $result->free_result();
         return $objects;
     }
 
@@ -494,8 +522,6 @@ abstract class Request {
         $sql = '';
 
 		foreach($conditions as $condition) {
-			$field = $condition['field'];
-
 			if($condition['close'] === true) {
                 if($opened === 0) {
                     throw new \Exception('Cannot close not opened parenthesis');
@@ -514,35 +540,7 @@ abstract class Request {
 				$opened++;
 			}
 
-			$value = '';
-
-			if($condition['value'] !== false && !is_array($condition['value'])) {
-                $class = $this->classes[$condition['table']];
-
-				switch($class::getPropertyClass($field)) {
-					case 'String':
-					case 'JSON':
-						$value = "'".$this->database->escapeString($condition['value'])."'";
-						break;
-					case 'Integer':
-					case 'Timestamp':
-						$value = (Integer) $condition['value'];
-						break;
-					case 'Float':
-						$value = (Float) str_replace(',', '.', $condition['value']);
-						break;
-					case 'DateTime':
-						$value = "'".$this->database->escapeString($condition['value'])."'";
-						break;
-					default:
-						$value = (Integer) $condition['value'];
-				}
-			}
-			else {
-				$value = $condition['value'];
-			}
-
-			$sql .= $this->generateSQLOperator('T'.$condition['table'].'.`'.$condition['field'].'`', $condition['operator'], $value);
+            $sql .= $this->generateSQLOperator($condition);
 		}
 
 		$sql .= str_repeat(')', $opened);
@@ -577,74 +575,84 @@ abstract class Request {
 		return "\n".'LIMIT '.$this->offset.','.$this->lines;
 	}
 
-	private function generateSQLOperator($field, $operator, $value) {
-		$clause = '';
+	private function generateSQLOperator(&$condition) {
+        $table =& $condition['table'];
+        $operator =& $condition['operator'];
 
-		if(is_array($value)
-		&& isset($value[0])
-		&& isset($value[1])
-		&& isset($this->index[$value[0]])) {
-			$value = 'T'.$this->index[$value[0]].'.'.$value[1];
-		}
+        $field = 'T'.$condition['table'].'.`'.$condition['field'].'`';
+        $tableClass = $this->classes[$table];
+        $propertyClass = $tableClass::getPropertyClass($condition['field']);
+        $link = false;
+
+        if($condition['value'] !== false) {
+            if(is_string($condition['value']) && preg_match('/^([a-z0-9]+)\.([a-z0-9]+)$/i', $condition['value'], $matches)) {
+                if(!isset($this->index[$matches[1]])) {
+                    
+                }
+
+                $link = 'T'.$this->index[$matches[1]].'.'.$matches[2];
+            }
+            else {
+                $values = is_array($condition['value']) ? $condition['value'] : Array($condition['value']);
+
+                foreach($values as $index => $value) {
+                    switch($propertyClass) {
+                        case 'String':
+                        case 'JSON':
+                        case 'DateTime':
+                            $this->prepareBindings[0] .= 's';
+                            $this->prepareBindings[] = (String) $value;
+                            break;
+                        case 'Float':
+                            $this->prepareBindings[0] .= 'd';
+                            $this->prepareBindings[] = (Float) str_replace(',', '.', $value);
+                            break;
+                        case 'Integer':
+                        case 'Timestamp':
+                        case is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object'):
+                            $this->prepareBindings[0] .= 'i';
+                            $this->prepareBindings[] = (Integer) $value;
+                            break;
+                        default:
+                            throw new \LogicException('Unhandled property class');
+                    }
+                }
+            }
+        }
 
 		switch($operator) {
 			case 'IS NULL':
-				$clause = $field.' IS NULL';
-				break;
 			case 'IS NOT NULL':
-				$clause = $field.' IS NOT NULL';
+				$clause = $field.' '.$operator;
 				break;
 			case '>':
-				$clause = $field.'>'.$value;
-				break;
 			case '<':
-				$clause = $field.'<'.$value;
-				break;
 			case '>=':
-				$clause = $field.'>='.$value;
-				break;
 			case '<=':
-				$clause = $field.'<='.$value;
-				break;
 			case '=':
-				$clause = $field.'='.$value;
-				break;
 			case '!=':
-				$clause = $field.'!='.$value;
+                $clause = $field.$operator.($link === false ? '?' : $link);
 				break;
 			case 'LIKE':
-				$clause = $field.' LIKE '.$value;
+				$clause = $field.' LIKE ?';
 				break;
 			case 'IN':
-				if(is_array($value) && sizeof($value) != 0) {
-					if(is_string($value[0])) {
-						foreach($value as $key => $val) {
-							$value[$key] = "'".$this->database->escapeString($val)."'";
-						}
-					}
-
-					$clause = $field.' IN ('.implode(',', $value).')';
-				}
-				else {
-					$clause = $field.' IN (-1)';
-				}
-				break;
 			case 'NOT IN':
-				if(is_array($value) && sizeof($value) != 0) {
-					if(is_string($value[0])) {
-						foreach($value as $key => $val) {
-							$value[$key] = "'".$this->database->escapeString($val)."'";
-						}
-					}
+				if(!is_array($values)) {
+                    throw new \InvalidArgumentException('Invalid values for operator '.$operator);
+                }
 
-					$clause = $field.' NOT IN ('.implode(',', $value).')';
-				}
-				else {
-					$clause = $field.' NOT IN (-1)';
+                $c = sizeof($values);
+
+                if($c !== 0) {
+                    $clause = $field.' '.$operator.' ('.str_repeat('?,', $c - 1).'?)';
+                }
+                else {
+                    $clause = $field.' '.$operator.' (-1)';
 				}
 				break;
 			default:
-				throw new \Exception('Invalid operator');
+				throw new \LogicException('Invalid operator');
 		}
 
 		return $clause;
