@@ -30,6 +30,10 @@ class Database {
     }
 
     public function connect() {
+        if(!function_exists('mysqli_fetch_all')) {
+            throw new \Exception('mysqlnd is not enabled');
+        }
+
         if($this->isConnected()) {
             throw new \Exception('Database connection already established');
         }

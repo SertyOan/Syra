@@ -75,7 +75,7 @@ abstract class Object {
             }
 		}
 		else {
-			throw new \LogicException('Property does not exist');
+			throw new \LogicException('Property '.$property.' does not exist');
 		}
 	}
 
@@ -107,7 +107,7 @@ abstract class Object {
 			return $this->__collections[$property];
 		}
 		else {
-			throw new \Exception('Property does not exist');
+			throw new \LogicException('Property '.$property.' does not exist');
 		}
 	}
 

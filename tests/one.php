@@ -10,7 +10,7 @@ include('../src/MySQL/Request.php');
 
 class Request extends \Syra\MySQL\Request {
     const
-        DATABASE_CLASS = '\Test\Database';
+        DATABASE_CLASS = '\\Test\\Database';
 
     protected function buildClassFromTable($table) {
         return '\\Test\\'.$table;
