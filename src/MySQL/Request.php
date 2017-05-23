@@ -75,8 +75,12 @@ abstract class Request {
         for($i = 0, $c = func_num_args(); $i < $c; $i++) {
             $property = func_get_arg($i);
 
+            if(!is_string($property)) {
+                throw new \InvalidArgumentException('All arguments must be strings');
+            }
+
             if(!$class::hasProperty($property)) {
-                throw new \Exception('Property does not exist');
+                throw new \InvalidArgumentException('A property does not exist');
             }
 
             $this->fields[$index][] = $property;
@@ -133,7 +137,7 @@ abstract class Request {
         return $this;
     }
 
-    public function with($logic, $field, $operator, $value, $option) {
+    public function with($logic, $field, $operator, $value = null, $option = null) {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
         // DEBUG if(sizeof($this->classes) <= 1) {
         // DEBUG     throw new \Exception('No class linked yet');
@@ -315,14 +319,14 @@ abstract class Request {
         $statement->execute();
 
         if($success === false) {
-            error_log($this->database->link->error);
+            error_log('Database error: '.$this->database->link->error);
             throw new \Exception('Database error');
         }
 
         $result = $statement->get_result();
 
         if($result === false) {
-            error_log($this->database->link->error);
+            error_log('Database error: '.$this->database->link->error);
             throw new \Exception('Database error');
         }
         
@@ -415,7 +419,6 @@ abstract class Request {
             }
         }
     }
-
 
     // NOTE SQL generation methods
 
@@ -517,11 +520,11 @@ abstract class Request {
         return $sql;
 	}
 
-	private function generateSQLConditions($conditions) {
+	private function generateSQLConditions(&$conditions) {
 		$opened = 0;
         $sql = '';
 
-		foreach($conditions as $condition) {
+		foreach($conditions as &$condition) {
 			if($condition['close'] === true) {
                 if($opened === 0) {
                     throw new \Exception('Cannot close not opened parenthesis');
@@ -575,7 +578,7 @@ abstract class Request {
 		return "\n".'LIMIT '.$this->offset.','.$this->lines;
 	}
 
-	private function generateSQLOperator(&$condition) {
+	private function generateSQLOperator($condition) {
         $table =& $condition['table'];
         $operator =& $condition['operator'];
 
@@ -587,35 +590,19 @@ abstract class Request {
         if($condition['value'] !== false) {
             if(is_string($condition['value']) && preg_match('/^([a-z0-9]+)\.([a-z0-9]+)$/i', $condition['value'], $matches)) {
                 if(!isset($this->index[$matches[1]])) {
-                    
+                    throw new \Exception('Invalid table');
                 }
 
                 $link = 'T'.$this->index[$matches[1]].'.'.$matches[2];
             }
             else {
-                $values = is_array($condition['value']) ? $condition['value'] : Array($condition['value']);
-
-                foreach($values as $index => $value) {
-                    switch($propertyClass) {
-                        case 'String':
-                        case 'JSON':
-                        case 'DateTime':
-                            $this->prepareBindings[0] .= 's';
-                            $this->prepareBindings[] = (String) $value;
-                            break;
-                        case 'Float':
-                            $this->prepareBindings[0] .= 'd';
-                            $this->prepareBindings[] = (Float) str_replace(',', '.', $value);
-                            break;
-                        case 'Integer':
-                        case 'Timestamp':
-                        case is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object'):
-                            $this->prepareBindings[0] .= 'i';
-                            $this->prepareBindings[] = (Integer) $value;
-                            break;
-                        default:
-                            throw new \LogicException('Unhandled property class');
+                if(is_array($condition['value'])) {
+                    foreach($condition['value'] as $value) {
+                        $this->addBinding($propertyClass, $value);
                     }
+                }
+                else {
+                    $this->addBinding($propertyClass, $condition['value']);
                 }
             }
         }
@@ -638,11 +625,11 @@ abstract class Request {
 				break;
 			case 'IN':
 			case 'NOT IN':
-				if(!is_array($values)) {
+				if(!is_array($condition['value'])) {
                     throw new \InvalidArgumentException('Invalid values for operator '.$operator);
                 }
 
-                $c = sizeof($values);
+                $c = sizeof($condition['value']);
 
                 if($c !== 0) {
                     $clause = $field.' '.$operator.' ('.str_repeat('?,', $c - 1).'?)';
@@ -657,4 +644,29 @@ abstract class Request {
 
 		return $clause;
 	}
+
+    private function addBinding($propertyClass, &$value) {
+        switch($propertyClass) {
+            case 'String':
+            case 'JSON':
+            case 'DateTime':
+                $this->prepareBindings[0] .= 's';
+                $value = (String) $value;
+                break;
+            case 'Float':
+                $this->prepareBindings[0] .= 'd';
+                $value = (Float) str_replace(',', '.', $value);
+                break;
+            case 'Integer':
+            case is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object'):
+            case 'Timestamp':
+                $this->prepareBindings[0] .= 'i';
+                $value = (Integer) $value;
+                break;
+            default:
+                throw new \LogicException('Unhandled property class');
+        }
+
+        $this->prepareBindings[] =& $value;
+    }
 }
