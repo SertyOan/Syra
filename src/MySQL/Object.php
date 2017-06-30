@@ -163,7 +163,8 @@ abstract class Object {
 	public function delete() {
 		if($this->isSaved()) {
 			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
-            $database->writer->query($stmt); // TODO how do we get writer database access in current model
+            $database = $class::getWriter();
+            $database->query($stmt);
 			$this->setSaved(false);
 		}
 	}
