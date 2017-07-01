@@ -162,8 +162,10 @@ abstract class Object {
 
 	public function delete() {
 		if($this->isSaved()) {
-			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
+            $class = static::DATABASE_CLASS;
             $database = $class::getWriter();
+
+			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
             $database->query($stmt);
 			$this->setSaved(false);
 		}
