@@ -309,13 +309,17 @@ abstract class Request {
             throw new \Exception('Database error');
         }
 
-        $bindings = Array();
+        if(sizeof($this->prepareBindings) > 1) {
+            // NOTE bind_param needs reference, not values, so we create an array of references
+            $bindings = Array();
 
-        foreach($this->prepareBindings as $key => $value) {
-            $bindings[] =& $this->prepareBindings[$key];
+            foreach($this->prepareBindings as $key => $value) {
+                $bindings[] =& $this->prepareBindings[$key];
+            }
+
+            $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
         }
 
-        $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
         $statement->execute();
 
         if($success === false) {
