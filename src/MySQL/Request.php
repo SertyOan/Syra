@@ -318,14 +318,14 @@ abstract class Request {
             }
 
             $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
+
+            if($success === false) {
+                error_log('Database error: '.$this->database->link->error);
+                throw new \Exception('Database error');
+            }
         }
 
         $statement->execute();
-
-        if($success === false) {
-            error_log('Database error: '.$this->database->link->error);
-            throw new \Exception('Database error');
-        }
 
         $result = $statement->get_result();
 
