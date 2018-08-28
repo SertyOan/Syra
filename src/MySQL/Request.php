@@ -591,7 +591,7 @@ abstract class Request {
         $propertyClass = $tableClass::getPropertyClass($condition['field']);
         $link = false;
 
-        if($condition['value'] !== false) {
+        if(!is_null($condition['value'])) {
             if(is_string($condition['value']) && preg_match('/^([a-z0-9]+)\.([a-z0-9]+)$/i', $condition['value'], $matches)) {
                 if(!isset($this->index[$matches[1]])) {
                     throw new \Exception('Invalid table');
