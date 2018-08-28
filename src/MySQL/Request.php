@@ -278,9 +278,41 @@ abstract class Request {
     }
 
     public function count() {
-		$statement = $this->generateCountSQL();
-		$data = $this->database->queryRows($statement);
-		return ((Integer) $data[0]['C']);
+		$query = $this->generateCountSQL();
+        $statement = $this->database->link->prepare($query);
+
+        if($statement === false) {
+            error_log($this->database->link->error);
+            throw new \Exception('Database error');
+        }
+
+        if(sizeof($this->prepareBindings) > 1) {
+            // NOTE bind_param needs reference, not values, so we create an array of references
+            $bindings = Array();
+
+            foreach($this->prepareBindings as $key => $value) {
+                $bindings[] =& $this->prepareBindings[$key];
+            }
+
+            $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
+
+            if($success === false) {
+                error_log('Database error: '.$this->database->link->error);
+                throw new \Exception('Database error');
+            }
+        }
+
+        $statement->execute();
+        $result = $statement->get_result();
+
+        if($result === false) {
+            error_log('Database error: '.$this->database->link->error);
+            throw new \Exception('Database error');
+        }
+        
+        $line = $result->fetch_assoc();
+        $result->free_result();
+		return ((Integer) $line['C']);
     }
 
     public function mapAsObject() {
@@ -449,7 +481,7 @@ abstract class Request {
 			$statement .= 'DISTINCT ';
 		}
 		
-		$statement .= ' T0.id) AS C';
+		$statement .= 'T0.id) AS C';
 		$statement .= $this->generateSQLJoins();
 		$statement .= $this->generateSQLWhere();
         return $statement;
