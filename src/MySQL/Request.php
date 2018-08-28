@@ -160,7 +160,7 @@ abstract class Request {
 
             $logic = null;
             $close = false;
-            $open = !empty($matches[2]);
+            $open = !empty($matches[1]);
         }
         else {
             if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
@@ -194,7 +194,7 @@ abstract class Request {
 
             $logic = null;
             $close = false;
-            $open = !empty($matches[2]);
+            $open = !empty($matches[1]);
         }
         else {
             if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
