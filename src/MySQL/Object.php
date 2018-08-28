@@ -205,7 +205,7 @@ abstract class Object {
 						$fields['`'.$property.'`'] = (Integer) $this->$property->format('U');
 						break;
 					case 'JSON':
-						$fields['`'.$property.'`'] = "'".json_encode($this->$property)."'";
+						$fields['`'.$property.'`'] = "'".$database->escapeString(json_encode($this->$property, JSON_UNESCAPED_SLASHES))."'";
 						break;
 					default:
 						if(isset($this->$property->id) && !is_null($this->$property->id)) {
@@ -223,9 +223,33 @@ abstract class Object {
 				$updatedFields[] = $key.'='.$value;
 			}
 
-			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$this->id.' LIMIT 1';
+            switch(static::$properties['id']['class']) {
+                case 'Integer':
+                    $id = (Integer) $this->id;
+                    break;
+                case 'String':
+                    $id = "'".$database->escapeString($this->id)."'";
+                    break;
+                default:
+                    throw new Exception('Invalid class for id field');
+            }
+
+			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$id.' LIMIT 1';
 		}
 		else {
+            if(!is_null($this->id)) {
+                switch(static::$properties['id']['class']) {
+                    case 'Integer':
+                        $fields['`id`'] = (Integer) $this->id;
+                        break;
+                    case 'String':
+                        $fields['`id`'] = "'".$database->escapeString($this->id)."'";
+                        break;
+                    default:
+                        throw new Exception('Invalid class for id field');
+                }
+            }
+
 			$stmt = 'INSERT INTO '.self::myTable().' (';
 			$stmt .= implode(',', array_keys($fields));
 			$stmt .= ') VALUES (';
