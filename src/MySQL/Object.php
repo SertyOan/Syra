@@ -12,8 +12,12 @@ abstract class Object {
 	}
 
     final public static function getPropertyClass($property) {
+        if(!preg_match('@^[a-z0-9]+$i', $property)) {
+            throw new \Exception('Property name is invalid');
+        }
+
 		if(empty(static::$properties[$property])) {
-            throw new \Exception('Property not defined');
+            throw new \Exception('Property not defined ('.$property.')');
 		}
 
 		return static::$properties[$property]['class'];
