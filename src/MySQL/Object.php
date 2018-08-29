@@ -213,7 +213,16 @@ abstract class Object {
 						break;
 					default:
 						if(isset($this->$property->id) && !is_null($this->$property->id)) {
-							$fields['`'.$property.'`'] = $this->$property->id;
+                            switch(gettype($this->$property->id)) {
+                                case 'integer':
+                                    $fields['`'.$property.'`'] = $this->$property->id;
+                                    break;
+                                case 'string':
+                                    $fields['`'.$property.'`'] = "'".$database->escapeString($this->$property->id)."'";
+                                    break;
+                                default:
+                                    throw new Exception('ORM Error: invalid type for field');
+                            }
 						}
 				}
 			}
