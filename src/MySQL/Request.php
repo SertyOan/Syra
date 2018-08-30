@@ -682,6 +682,10 @@ abstract class Request {
 	}
 
     private function addBinding($propertyClass, &$value) {
+        if(is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object')) {
+            $propertyClass = $propertyClass::getPropertyClass('id');
+        }
+
         switch($propertyClass) {
             case 'String':
             case 'JSON':
@@ -694,7 +698,6 @@ abstract class Request {
                 $value = (Float) str_replace(',', '.', $value);
                 break;
             case 'Integer':
-            case is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object'):
             case 'Timestamp':
                 $this->prepareBindings[0] .= 'i';
                 $value = (Integer) $value;
