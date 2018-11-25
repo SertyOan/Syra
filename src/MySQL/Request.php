@@ -16,7 +16,7 @@ abstract class Request {
         $orderBy = Array(),
         $links = Array(),
         $conditions = Array(),
-        $prepareBindings = Array(''),
+        $prepareBindings,
         $distinctLines = false,
         $offset = 0,
         $lines = 0;
@@ -278,6 +278,7 @@ abstract class Request {
     }
 
     public function count() {
+        $this->prepareBindings = [''];
 		$query = $this->generateCountSQL();
         $statement = $this->database->link->prepare($query);
 
@@ -330,6 +331,7 @@ abstract class Request {
     }
 
     public function mapAsObjects() {
+        $this->prepareBindings = [''];
         $objects = Array();
         $pathes = Array();
         $lastIndex = null;
