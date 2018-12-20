@@ -169,7 +169,7 @@ abstract class Object {
             $class = static::DATABASE_CLASS;
             $database = $class::getWriter();
 
-			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id.' LIMIT 1';
+			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id;
             $database->query($stmt);
 			$this->setSaved(false);
 		}
@@ -247,7 +247,7 @@ abstract class Object {
                     throw new Exception('Invalid class for id field');
             }
 
-			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$id.' LIMIT 1';
+			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$id;
 		}
 		else {
             if(!is_null($this->id)) {
