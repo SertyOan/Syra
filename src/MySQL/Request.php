@@ -635,8 +635,8 @@ abstract class Request {
             }
             else {
                 if(is_array($condition['value'])) {
-                    foreach($condition['value'] as $value) {
-                        $this->addBinding($propertyClass, $value);
+                    foreach($condition['value'] as $key => $value) {
+                        $this->addBinding($propertyClass, $condition['value'][$key]);
                     }
                 }
                 else {
