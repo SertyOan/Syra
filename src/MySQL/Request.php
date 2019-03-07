@@ -46,8 +46,8 @@ abstract class Request {
     private function addTable($table) {
         $class = $this->buildClassFromTable($table);
 
-        if(!is_subclass_of($class, '\\Syra\\MySQL\\Object')) {
-            throw new \Exception('Class is not a child of Object');
+        if(!is_subclass_of($class, '\\Syra\\MySQL\\ModelObject')) {
+            throw new \Exception('Class is not a child of ModelObject');
         }
 
         $this->classes[] = $class;
@@ -267,7 +267,7 @@ abstract class Request {
         $arrays = Array();
 
         foreach($objects as $object) {
-            if(!is_subclass_of($object, '\\Syra\\MySQL\\Object')) {
+            if(!is_subclass_of($object, '\\Syra\\MySQL\\ModelObject')) {
                 throw new \LogicException('Can only transform data objects to array');
             }
 
@@ -327,7 +327,7 @@ abstract class Request {
 
     public function mapAsArray() {
         $object = $this->mapAsObject();
-        return $object instanceof Object ? $object->asArray() : $object;
+        return $object instanceof ModelObject ? $object->asArray() : $object;
     }
 
     public function mapAsObjects() {
@@ -684,7 +684,7 @@ abstract class Request {
 	}
 
     private function addBinding($propertyClass, &$value) {
-        if(is_subclass_of($propertyClass, '\\Syra\\MySQL\\Object')) {
+        if(is_subclass_of($propertyClass, '\\Syra\\MySQL\\ModelObject')) {
             $propertyClass = $propertyClass::getPropertyClass('id');
         }
 

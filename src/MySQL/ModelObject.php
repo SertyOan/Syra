@@ -1,7 +1,7 @@
 <?php
 namespace Syra\MySQL;
 
-abstract class Object {
+abstract class ModelObject {
 	private
 		$__inDatabase = false, // TODO review naming
 		$__nulled = Array(),
