@@ -1,6 +1,8 @@
 <?php
 namespace Syra\MySQL;
 
+use Syra\Reference;
+
 abstract class Request {
     const
         LEFT_JOIN = 1,
@@ -626,12 +628,14 @@ abstract class Request {
         $link = false;
 
         if(!is_null($condition['value'])) {
-            if(is_string($condition['value']) && preg_match('/^([a-z0-9]+)\.([a-z0-9]+)$/i', $condition['value'], $matches)) {
-                if(!isset($this->index[$matches[1]])) {
+            if($condition['value'] instanceof \stdClass) {
+                $reference = $condition['value'];
+
+                if(!isset($this->index[$reference->table]])) {
                     throw new \Exception('Invalid table');
                 }
 
-                $link = 'T'.$this->index[$matches[1]].'.'.$matches[2];
+                $link = 'T'.$this->index[$reference->table].'.'.$reference->field;
             }
             else {
                 if(is_array($condition['value'])) {
