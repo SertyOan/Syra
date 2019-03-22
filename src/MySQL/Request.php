@@ -631,7 +631,7 @@ abstract class Request {
             if($condition['value'] instanceof \stdClass) {
                 $reference = $condition['value'];
 
-                if(!isset($this->index[$reference->table]])) {
+                if(!isset($this->index[$reference->table])) {
                     throw new \Exception('Invalid table');
                 }
 
