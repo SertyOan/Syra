@@ -53,7 +53,7 @@ class CustomRequest extends \Syra\MySQL\DataRequest {
 Then for each table of your database you will add a class.
 
 ```php
-class Foobar extends \Syra\MySQL\Object {
+class Foobar extends \Syra\MySQL\ModelObject {
     const
         DATABASE_CLASS = 'CustomDabase',
         DATABASE_SCHEMA = 'Schema',
