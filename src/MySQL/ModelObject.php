@@ -169,7 +169,23 @@ abstract class ModelObject {
             $class = static::DATABASE_CLASS;
             $database = $class::getWriter();
 
-			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`='.$this->id;
+			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`=';
+            // TODO use prepare statement instead
+
+            switch(static::$properties['id']['class']) {
+                case 'Integer':
+                    $id = (Integer) $this->id;
+                    break;
+                case 'String':
+                    $class = static::DATABASE_CLASS;
+                    $database = $class::getWriter();
+                    $id = "'".$database->escapeString($this->id)."'";
+                    break;
+                default:
+                    throw new Exception('Invalid class for id field');
+            }
+
+            $stmt .= $id;
             $database->query($stmt);
 			$this->setSaved(false);
 		}
