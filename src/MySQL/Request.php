@@ -654,6 +654,8 @@ abstract class Request {
 			case 'IS NOT NULL':
 				$clause = $field.' '.$operator;
 				break;
+			case '&':
+			case '|':
 			case '>':
 			case '<':
 			case '>=':
