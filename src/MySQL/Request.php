@@ -91,11 +91,6 @@ abstract class Request {
         return $this;
     }
 
-    public function onlyDistinct() {
-        $this->distinctLines = true;
-        return $this;
-    }
-
     public function offset($i) {
         $this->offset = max(0, $i);
         return $this;
@@ -279,9 +274,9 @@ abstract class Request {
         return $arrays;
     }
 
-    public function count() {
+    public function count($field = 'id', $distinct = false) {
         $this->prepareBindings = [''];
-		$query = $this->generateCountSQL();
+		$query = $this->generateCountSQL($field, $distinct);
         $statement = $this->database->link->prepare($query);
 
         if($statement === false) {
@@ -478,14 +473,14 @@ abstract class Request {
         return $statement;
 	}
 
-	private function generateCountSQL() {
+	private function generateCountSQL($field, $distinct) {
 		$statement = 'SELECT COUNT(';
 
-		if($this->distinctLines) {
+		if($distinct) {
 			$statement .= 'DISTINCT ';
 		}
 		
-		$statement .= 'T0.id) AS C';
+		$statement .= 'T0.'.$field.') AS C';
 		$statement .= $this->generateSQLJoins();
 		$statement .= $this->generateSQLWhere();
         return $statement;
@@ -501,11 +496,6 @@ abstract class Request {
 		}
 
 		$sql = 'SELECT ';
-
-		if($this->distinctLines) {
-			$sql .= 'DISTINCT ';
-		}
-
 		$sql .= implode(',', $selectedFields);
         return $sql;
 	}
