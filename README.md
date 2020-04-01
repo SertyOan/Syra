@@ -12,6 +12,7 @@ You can install it via composer: osyra/syra
 You need to create two classes.
 
 ```php
+namespace App;
 class CustomDatabase implements \Syra\MySQL\Database {
     private static
         $writer,
@@ -39,13 +40,16 @@ class CustomDatabase implements \Syra\MySQL\Database {
         return self::$reader;
     }
 }
+```
 
+```php
+namespace App;
 class CustomRequest extends \Syra\MySQL\DataRequest {
     const
-        DATABASE_CLASS = 'CustomDatabase';
+        DATABASE_CLASS = '\\App\\CustomDatabase';
 
     protected function buildClassFromTable($table) {
-        return '\\Path\\To\\'.$table; // this must return the name of the class matched by the table
+        return '\\App\\Model\\'.$table; // this must return the name of the class matched by the table
     }
 }
 ```
@@ -53,9 +57,10 @@ class CustomRequest extends \Syra\MySQL\DataRequest {
 Then for each table of your database you will add a class.
 
 ```php
+namespace App\Model;
 class Foobar extends \Syra\MySQL\ModelObject {
     const
-        DATABASE_CLASS = 'CustomDabase',
+        DATABASE_CLASS = '\\App\\CustomDatabase',
         DATABASE_SCHEMA = 'Schema',
         DATABASE_TABLE = 'Foobar';
 
@@ -63,7 +68,7 @@ class Foobar extends \Syra\MySQL\ModelObject {
         $properties = [
             'id' => ['class' => 'Integer'],
             'name' => ['class' => 'String'],
-            'parent' => ['class' => 'Foobar']
+            'parent' => ['class' => '\\App\\Model\\Foobar']
         ];
 
     protected
@@ -72,3 +77,12 @@ class Foobar extends \Syra\MySQL\ModelObject {
         $parent;
 }
 ```
+
+To request data you will use the classes defined before :
+
+```php
+$foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->where('', 'Foobar', 'parent', '=', $parentID)
+    ->mapAsObjects();
+```
+
