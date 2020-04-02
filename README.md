@@ -164,7 +164,7 @@ $foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
 $array = $foobar->asArray();
 ```
 
-# Saving/deleting objects
+# Modifying objects
 
 ## Saving
 ```php
