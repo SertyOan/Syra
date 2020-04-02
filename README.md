@@ -139,8 +139,20 @@ foreach($bars as $bar) {
 }
 ```
 
-## Requesting as associative arrays (for JSON encoding later)
+## Requesting as associative arrays (for latter JSON encoding)
 ```php
 $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
     ->mapAsArrays();
+```
+
+## Transforming objects to arrays
+```php
+$foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->mapAsObjects();
+$arrays = \App\CustomRequest::objectsAsArrays($foobars);
+
+$foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->where('', 'Foobar', 'id', '=', 1)
+    ->mapAsObject();
+$array = $foobar->asArray();
 ```
