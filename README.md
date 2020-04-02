@@ -111,6 +111,8 @@ $foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
 ```
 
 ## Requesting objects with conditions
+Condition is the first argument of any where() function.
+It can start with a closing parenthesis followed by AND or OR and can end with an opening parenthesis.
 ```php
 $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
     ->where('', 'Foobar', 'parent', '=', $parentID)
@@ -118,6 +120,24 @@ $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
     ->where('OR', 'Foobar', 'name', 'LIKE', '%World')
     ->mapAsObjects();
 ```
+
+## Ordering
+```php
+$foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->orderAscBy('Foobar', 'name')
+    ->orderDescBy('Foobar', 'id')
+    ->mapAsObjects();
+```
+
+## Limit and offset
+This will get 10 rows from database starting at 10th row.
+```php
+$foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->lines(10)
+    ->offset(10)
+    ->mapAsObjects();
+```
+Note: be aware this is a limitation of the number of rows, not the number of objects.
 
 ## Linking tables to get sub-object
 ```php
