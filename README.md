@@ -129,7 +129,7 @@ $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
 ## Linking tables to get a collection
 ```php
 $bars = \App\CustomRequest::get('Bar')->withFields('id', 'name', 'createdAt')
-    ->leftJoin('Foobar', 'Foobars)->on('Bar', 'id', 'parent')->withFields('id', 'name')
+    ->leftJoin('Foobar', 'Foobars')->on('Bar', 'id', 'parent')->withFields('id', 'name')
     ->mapAsObjects();
     
 foreach($bars as $bar) {
@@ -137,6 +137,13 @@ foreach($bars as $bar) {
         ...
     }
 }
+```
+
+## Condition on linked table
+```php
+$bars = \App\CustomRequest::get('Bar')->withFields('id', 'name', 'createdAt')
+    ->leftJoin('Foobar', 'Foobars')->on('Bar', 'id', 'parent')->withFields('id', 'name')->with('', 'name', 'LIKE', '%Hello%')
+    ->mapAsObjects();
 ```
 
 ## Requesting as associative arrays (for latter JSON encoding)
@@ -155,4 +162,25 @@ $foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
     ->where('', 'Foobar', 'id', '=', 1)
     ->mapAsObject();
 $array = $foobar->asArray();
+```
+
+# Saving/deleting objects
+
+## Saving
+```php
+$foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->where('', 'Foobar', 'id', '=', 1)
+    ->mapAsObject();
+$foobar->name = 'Something';
+$foobar->save();
+\App\Database::getWriter()->commit();
+```
+
+## Deleting
+```php
+$foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
+    ->where('', 'Foobar', 'id', '=', 1)
+    ->mapAsObject();
+$foobar->delete();
+\App\Database::getWriter()->commit();
 ```
