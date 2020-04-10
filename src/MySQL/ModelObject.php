@@ -133,7 +133,7 @@ abstract class ModelObject {
 		}
 	}
 
-	final public function asArray() {
+	public function asArray() {
 		$array = Array();
 
 		foreach(static::$properties as $property => $description) {
