@@ -19,7 +19,6 @@ abstract class Request {
         $links = Array(),
         $conditions = Array(),
         $prepareBindings,
-        $distinctLines = false,
         $offset = 0,
         $lines = 0;
 
@@ -495,7 +494,7 @@ abstract class Request {
 			}
 		}
 
-		$sql = 'SELECT ';
+		$sql = 'SELECT DISTINCT ';
 		$sql .= implode(',', $selectedFields);
         return $sql;
 	}
