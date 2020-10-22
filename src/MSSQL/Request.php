@@ -397,7 +397,12 @@ abstract class Request {
 	private function generateDataSQL() {
 		$statement = $this->generateSQLSelect();
 		$statement .= $this->generateSQLJoins();
-		$statement .= $this->generateSQLWhere();
+        $statement .= $this->generateSQLWhere();
+
+        if(($this->lines !== 0 || $this->offset !== 0) && sizeof($this->orderBy) === 0) {
+            $keys = array_keys($this->index);
+            $this->orderAscBy($keys[0], 'id');
+        }
 
 		if(sizeof($this->orderBy) !== 0) {
 			$statement .= $this->generateSQLOrderBy();
@@ -417,7 +422,7 @@ abstract class Request {
 			$statement .= 'DISTINCT ';
 		}
 		
-		$statement .= 'T0.'.$field.') AS C';
+		$statement .= 'T0.['.$field.']) AS C';
 		$statement .= $this->generateSQLJoins();
 		$statement .= $this->generateSQLWhere();
         return $statement;
@@ -541,8 +546,8 @@ abstract class Request {
         return $sql;
 	}
 
-	private function generateSQLLimit() {
-		return "\n".'LIMIT '.$this->offset.','.$this->lines;
+    private function generateSQLLimit() {
+		return "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
 	}
 
 	private function generateSQLOperator($condition) {
