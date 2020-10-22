@@ -428,7 +428,7 @@ abstract class Request {
 
 		foreach($this->fields as $key => $fields) {
 			foreach($fields as $field) {
-                $selectedFields[] = 'T'.$key.'.'.$field.' AS T'.$key.'_'.$field;
+                $selectedFields[] = 'T'.$key.'.['.$field.'] AS T'.$key.'_'.$field;
 			}
 		}
 
