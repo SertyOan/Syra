@@ -185,7 +185,8 @@ abstract class ModelObject {
 	public function save() {
         $class = static::DATABASE_CLASS;
         $database = $class::getWriter();
-		$fields = Array();
+        $fields = Array();
+        $params = Array();
 
 		foreach(static::$properties as $property => $description) {
 			if($property == 'id') {
@@ -248,7 +249,7 @@ abstract class ModelObject {
                 default: throw new Exception('Invalid class for id field');
             }
 
-			$sql .= implode(',', $updatedFields).' WHERE `id`='.$id;
+			$sql .= implode(',', $updatedFields).' WHERE [id]='.$id;
 		}
 		else {
             if(!is_null($this->id)) {
