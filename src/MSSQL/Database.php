@@ -65,14 +65,16 @@ class Database {
         $statement = $this->link->prepare($sql);
 
         if($statement === false) {
+            error_log('Could not prepare database query');
             error_log($sql);
-            error_log($this->link->error);
+            error_log(implode(' / ', $this->link->errorInfo()));
 			throw new \Exception('Could not prepare database query');
         }
 
         if($statement->execute($params) === false) {
+            error_log('Could not execute database query');
             error_log($sql);
-            error_log($this->link->error);
+            error_log(implode(' / ', $this->link->errorInfo()));
 			throw new \Exception('Could not execute database query');
         }
 
