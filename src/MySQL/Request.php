@@ -400,11 +400,11 @@ abstract class Request {
 
     // NOTE SQL generation methods
 
-	private function generateDataSQL() {
+    private function generateDataSQL() {
         $joins = $this->generateSQLJoins();
         $orderBy = $this->generateSQLOrderBy();
 
-		$statement = $this->generateSQLSelect();
+        $statement = $this->generateSQLSelect();
         $statement .= $joins;
 
         if($this->lines !== 0 || $this->offset !== 0) {
@@ -422,40 +422,40 @@ abstract class Request {
 
         $statement .= $orderBy;
         return $statement;
-	}
+    }
 
-	private function generateCountSQL($field, $distinct) {
-		$statement = 'SELECT COUNT(';
+    private function generateCountSQL($field, $distinct) {
+        $statement = 'SELECT COUNT(';
 
-		if($distinct) {
-			$statement .= 'DISTINCT ';
-		}
-		
-		$statement .= 'T0.`'.$field.'`) AS C';
-		$statement .= $this->generateSQLJoins();
-		$statement .= $this->generateSQLWhere();
+        if($distinct) {
+            $statement .= 'DISTINCT ';
+        }
+        
+        $statement .= 'T0.`'.$field.'`) AS C';
+        $statement .= $this->generateSQLJoins();
+        $statement .= $this->generateSQLWhere();
         return $statement;
-	}
+    }
 
-	private function generateSQLSelect() {
-		$selectedFields = Array();
+    private function generateSQLSelect() {
+        $selectedFields = Array();
 
-		foreach($this->fields as $key => $fields) {
-			foreach($fields as $field) {
+        foreach($this->fields as $key => $fields) {
+            foreach($fields as $field) {
                 $selectedFields[] = 'T'.$key.'.`'.$field.'` AS T'.$key.'_'.$field;
-			}
-		}
+            }
+        }
 
-		$sql = 'SELECT DISTINCT ';
-		$sql .= implode(',', $selectedFields);
+        $sql = 'SELECT DISTINCT ';
+        $sql .= implode(',', $selectedFields);
         return $sql;
-	}
+    }
 
-	private function generateSQLJoins() {
-		$root = $this->classes[0];
-		$sql = "\n".'FROM '.$root::myTable().' T0';
+    private function generateSQLJoins() {
+        $root = $this->classes[0];
+        $sql = "\n".'FROM '.$root::myTable().' T0';
 
-		foreach($this->links as $rightTableIndex => $link) {
+        foreach($this->links as $rightTableIndex => $link) {
             if($link['joinType'] == Request::LEFT_JOIN) {
                 $sql .= "\n".'LEFT JOIN ';
             }
@@ -472,64 +472,64 @@ abstract class Request {
             $sql .= ' ON (T'.$link['leftTableIndex'].'.`'.$link['leftTableField'].'`=T'.$rightTableIndex.'.`'.$link['rightTableField'].'`';
             $sql .= $this->generateSQLJoinConditions($rightTableIndex);
             $sql .= ')';
-		}
+        }
 
         return $sql;
-	}
+    }
 
-	private function generateSQLJoinConditions($index) {
+    private function generateSQLJoinConditions($index) {
         $sql = '';
         $conditions = $this->links[$index]['conditions'];
 
         if(sizeof($conditions) !== 0) {
-			$sql .= ' AND (';
-			$sql .= $this->generateSQLConditions($conditions);
-			$sql .= ')';
-		}
+            $sql .= ' AND (';
+            $sql .= $this->generateSQLConditions($conditions);
+            $sql .= ')';
+        }
 
         return $sql;
-	}
+    }
 
-	private function generateSQLWhere() {
+    private function generateSQLWhere() {
         $sql = '';
 
-		if(sizeof($this->conditions) != 0) {
-			$sql .= "\n".'WHERE ';
-			$sql .= $this->generateSQLConditions($this->conditions);
-		}
+        if(sizeof($this->conditions) != 0) {
+            $sql .= "\n".'WHERE ';
+            $sql .= $this->generateSQLConditions($this->conditions);
+        }
 
         return $sql;
-	}
+    }
 
-	private function generateSQLConditions(&$conditions) {
-		$opened = 0;
+    private function generateSQLConditions(&$conditions) {
+        $opened = 0;
         $sql = '';
 
-		foreach($conditions as &$condition) {
-			if($condition['close'] === true) {
+        foreach($conditions as &$condition) {
+            if($condition['close'] === true) {
                 if($opened === 0) {
                     throw new \Exception('Cannot close not opened parenthesis');
                 }
 
-				$sql .= ')';
-				$opened--;
-			}
+                $sql .= ')';
+                $opened--;
+            }
 
-			if(!empty($condition['logic'])) {
-				$sql .= ' '.$condition['logic'].' ';
-			}
+            if(!empty($condition['logic'])) {
+                $sql .= ' '.$condition['logic'].' ';
+            }
 
-			if($condition['open'] === true) {
-				$sql .= '(';
-				$opened++;
-			}
+            if($condition['open'] === true) {
+                $sql .= '(';
+                $opened++;
+            }
 
             $sql .= $this->generateSQLOperator($condition);
-		}
+        }
 
-		$sql .= str_repeat(')', $opened);
+        $sql .= str_repeat(')', $opened);
         return $sql;
-	}
+    }
 
     private function generateSQLOrderBy() {
         if(sizeof($this->orderBy) === 0) {
@@ -537,30 +537,30 @@ abstract class Request {
             $this->orderAscBy($keys[0], 'id');
         }
 
-		$sql = "\n".'ORDER BY ';
+        $sql = "\n".'ORDER BY ';
         $orders = Array();
 
-		foreach($this->orderBy as $clause) {
-			switch($clause['option']) {
-				case Request::OPTION_DAY:
-					$orders[] = 'DAY(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
-					break;
-				case Request::OPTION_MONTH:
-					$orders[] = 'MONTH(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
-					break;
-				case Request::OPTION_YEAR:
-					$orders[] = 'YEAR(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
-					break;
-				default:
-					$orders[] = 'T'.$clause['table'].'.`'.$clause['field'].'` '.$clause['direction'];
-			}
-		}
+        foreach($this->orderBy as $clause) {
+            switch($clause['option']) {
+                case Request::OPTION_DAY:
+                    $orders[] = 'DAY(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
+                    break;
+                case Request::OPTION_MONTH:
+                    $orders[] = 'MONTH(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
+                    break;
+                case Request::OPTION_YEAR:
+                    $orders[] = 'YEAR(T'.$clause['table'].'.`'.$clause['field'].'`) '.$clause['direction'];
+                    break;
+                default:
+                    $orders[] = 'T'.$clause['table'].'.`'.$clause['field'].'` '.$clause['direction'];
+            }
+        }
 
-		$sql .= implode(',', $orders);
+        $sql .= implode(',', $orders);
         return $sql;
-	}
+    }
 
-	private function generateSQLOperator($condition) {
+    private function generateSQLOperator($condition) {
         $table =& $condition['table'];
         $operator =& $condition['operator'];
 
@@ -594,27 +594,27 @@ abstract class Request {
             }
         }
 
-		switch($operator) {
-			case 'IS NULL':
-			case 'IS NOT NULL':
-				$clause = $field.' '.$operator;
-				break;
-			case '&':
-			case '|':
-			case '>':
-			case '<':
-			case '>=':
-			case '<=':
-			case '=':
-			case '!=':
+        switch($operator) {
+            case 'IS NULL':
+            case 'IS NOT NULL':
+                $clause = $field.' '.$operator;
+                break;
+            case '&':
+            case '|':
+            case '>':
+            case '<':
+            case '>=':
+            case '<=':
+            case '=':
+            case '!=':
                 $clause = $field.$operator.($link === false ? '?' : $link);
-				break;
-			case 'LIKE':
-				$clause = $field.' LIKE ?';
-				break;
-			case 'IN':
-			case 'NOT IN':
-				if(!is_array($condition['value'])) {
+                break;
+            case 'LIKE':
+                $clause = $field.' LIKE ?';
+                break;
+            case 'IN':
+            case 'NOT IN':
+                if(!is_array($condition['value'])) {
                     throw new \InvalidArgumentException('Invalid values for operator '.$operator);
                 }
 
@@ -625,12 +625,12 @@ abstract class Request {
                 }
                 else {
                     $clause = $field.' '.$operator.' (-1)';
-				}
-				break;
-			default:
-				throw new \LogicException('Invalid operator');
-		}
+                }
+                break;
+            default:
+                throw new \LogicException('Invalid operator');
+        }
 
-		return $clause;
-	}
+        return $clause;
+    }
 }
