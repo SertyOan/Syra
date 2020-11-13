@@ -9,7 +9,7 @@ abstract class Request {
         OPTION_DAY = 1,
         OPTION_MONTH = 2,
         OPTION_YEAR = 4;
-    
+
     private
         $classes = Array(),
         $index = Array(),
@@ -46,7 +46,7 @@ abstract class Request {
     private function addTable($table) {
         $class = $this->buildClassFromTable($table);
 
-        if(!is_subclass_of($class, '\\Syra\\MSSQL\\ModelObject')) {
+        if(!is_subclass_of($class, self::OBJECTS_CLASS)) {
             throw new \Exception('Class is not a child of ModelObject');
         }
 
@@ -262,7 +262,7 @@ abstract class Request {
         $arrays = Array();
 
         foreach($objects as $object) {
-            if(!is_subclass_of($object, '\\Syra\\MSSQL\\ModelObject')) {
+            if(!is_subclass_of($object, self::OBJECTS_CLASS)) {
                 throw new \LogicException('Can only transform data objects to array');
             }
 
@@ -274,11 +274,15 @@ abstract class Request {
 
     public function count($field = 'id', $distinct = false) {
         $this->bindings = [];
-		$query = $this->generateCountSQL($field, $distinct);
-        $rows = $this->database->queryRows($query, $this->bindings);
-        $this->bindings = [];
+        $query = $this->generateCountSQL($field, $distinct);
+        $count = null;
 
-		return ((Integer) $rows[0]['C']);
+        foreach($this->database->queryRows($query, $this->bindings) as $row) {
+            $count = (Integer) $row['C'];
+        }
+
+        $this->bindings = [];
+        return $count;
     }
 
     public function mapAsObject() {
@@ -522,7 +526,12 @@ abstract class Request {
         return $sql;
 	}
 
-	private function generateSQLOrderBy() {
+    private function generateSQLOrderBy() {
+        if(sizeof($this->orderBy) === 0) {
+            $keys = array_keys($this->index);
+            $this->orderAscBy($keys[0], 'id');
+        }
+
 		$sql = "\n".'ORDER BY ';
 		$orders = Array();
 
@@ -572,11 +581,14 @@ abstract class Request {
             else {
                 if(is_array($condition['value'])) {
                     foreach($condition['value'] as $key => $value) {
-                        $this->bindings[] = $condition['value'][$key];
+                        $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+                        $this->bindings[] = $value;
                     }
                 }
                 else {
-                    $this->bindings[] = $condition['value'];
+                    $value = $condition['value'];
+                    $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+                    $this->bindings[] = $value;
                 }
             }
         }

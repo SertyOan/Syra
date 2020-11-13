@@ -250,6 +250,7 @@ abstract class ModelObject {
             }
 
 			$sql .= implode(',', $updatedFields).' WHERE [id]='.$id;
+            $params[] = $id;
 		}
 		else {
             if(!is_null($this->id)) {
@@ -270,10 +271,12 @@ abstract class ModelObject {
             $sql .= ') VALUES (';
 
             $marks = array_fill(0, count($fields), '?');
-			$sql .= implode(',', $marks).')';
+            $sql .= implode(',', $marks).')';
+
+            $params = array_values($fields);
 		}
 
-        $database->query($sql, array_values($fields));
+        $database->query($sql, $params);
 
 		if(!$this->isSaved() && is_null($this->id)) {
 			$this->id = $database->link->lastInsertId();
