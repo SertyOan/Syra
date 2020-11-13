@@ -5,6 +5,7 @@ use Syra\Reference;
 
 abstract class Request {
     const
+        OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject',
         LEFT_JOIN = 1,
         INNER_JOIN = 2,
         OPTION_DAY = 1,
@@ -18,7 +19,7 @@ abstract class Request {
         $orderBy = Array(),
         $links = Array(),
         $conditions = Array(),
-        $prepareBindings,
+        $bindings,
         $offset = 0,
         $lines = 0;
 
@@ -47,7 +48,7 @@ abstract class Request {
     private function addTable($table) {
         $class = $this->buildClassFromTable($table);
 
-        if(!is_subclass_of($class, '\\Syra\\MySQL\\ModelObject')) {
+        if(!is_subclass_of($class, self::OBJECTS_CLASS)) {
             throw new \Exception('Class is not a child of ModelObject');
         }
 
@@ -263,7 +264,7 @@ abstract class Request {
         $arrays = Array();
 
         foreach($objects as $object) {
-            if(!is_subclass_of($object, '\\Syra\\MySQL\\ModelObject')) {
+            if(!is_subclass_of($object, self::OBJECTS_CLASS)) {
                 throw new \LogicException('Can only transform data objects to array');
             }
 
@@ -274,42 +275,16 @@ abstract class Request {
     }
 
     public function count($field = 'id', $distinct = false) {
-        $this->prepareBindings = [''];
-		$query = $this->generateCountSQL($field, $distinct);
-        $statement = $this->database->link->prepare($query);
+        $this->bindings = [];
+        $query = $this->generateCountSQL($field, $distinct);
+        $count = null;
 
-        if($statement === false) {
-            error_log($this->database->link->error);
-            throw new \Exception('Database error');
+        foreach($this->database->queryRows($query, $this->bindings) as $row) {
+            $count = (Integer) $row['C'];
         }
 
-        if(sizeof($this->prepareBindings) > 1) {
-            // NOTE bind_param needs reference, not values, so we create an array of references
-            $bindings = Array();
-
-            foreach($this->prepareBindings as $key => $value) {
-                $bindings[] =& $this->prepareBindings[$key];
-            }
-
-            $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
-
-            if($success === false) {
-                error_log('Database error: '.$this->database->link->error);
-                throw new \Exception('Database error');
-            }
-        }
-
-        $statement->execute();
-        $result = $statement->get_result();
-
-        if($result === false) {
-            error_log('Database error: '.$this->database->link->error);
-            throw new \Exception('Database error');
-        }
-        
-        $line = $result->fetch_assoc();
-        $result->free_result();
-		return ((Integer) $line['C']);
+        $this->bindings = [];
+        return $count;
     }
 
     public function mapAsObject() {
@@ -327,44 +302,13 @@ abstract class Request {
     }
 
     public function mapAsObjects() {
-        $this->prepareBindings = [''];
+        $this->bindings = [];
         $objects = Array();
         $pathes = Array();
         $lastIndex = null;
         $query = $this->generateDataSQL();
-        $statement = $this->database->link->prepare($query);
 
-        if($statement === false) {
-            error_log($this->database->link->error);
-            throw new \Exception('Database error');
-        }
-
-        if(sizeof($this->prepareBindings) > 1) {
-            // NOTE bind_param needs reference, not values, so we create an array of references
-            $bindings = Array();
-
-            foreach($this->prepareBindings as $key => $value) {
-                $bindings[] =& $this->prepareBindings[$key];
-            }
-
-            $success = call_user_func_array(Array($statement, 'bind_param'), $bindings);
-
-            if($success === false) {
-                error_log('Database error: '.$this->database->link->error);
-                throw new \Exception('Database error');
-            }
-        }
-
-        $statement->execute();
-
-        $result = $statement->get_result();
-
-        if($result === false) {
-            error_log('Database error: '.$this->database->link->error);
-            throw new \Exception('Database error');
-        }
-        
-        while($line = $result->fetch_assoc()) {
+        foreach($this->database->queryRows($query, $this->bindings) as $line) {
             for($i = 0, $c = sizeof($this->classes); $i < $c; $i++) {
                 if(sizeof($this->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
                     continue;
@@ -423,7 +367,7 @@ abstract class Request {
             }
         }
 
-        $result->free_result();
+        $this->bindings = [];
         return $objects;
     }
 
@@ -457,18 +401,26 @@ abstract class Request {
     // NOTE SQL generation methods
 
 	private function generateDataSQL() {
+        $joins = $this->generateSQLJoins();
+        $orderBy = $this->generateSQLOrderBy();
+
 		$statement = $this->generateSQLSelect();
-		$statement .= $this->generateSQLJoins();
-		$statement .= $this->generateSQLWhere();
+        $statement .= $joins;
 
-		if(sizeof($this->orderBy) !== 0) {
-			$statement .= $this->generateSQLOrderBy();
-		}
+        if($this->lines !== 0 || $this->offset !== 0) {
+            $statement .= "\n".'INNER JOIN (';
+            $statement .= "\n".'SELECT DISTINCT T0.`id` ';
+            $statement .= $joins;
+            $statement .= $this->generateSQLWhere();
+            $statement .= $orderBy;
+            $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
+            $statement .= ') AS Subset ON (Subset.id = T0.id)';
+        }
+        else {
+            $statement .= $this->generateSQLWhere();
+        }
 
-		if($this->lines !== 0 || $this->offset !== 0) {
-			$statement .= $this->generateSQLLimit();
-		}
-
+        $statement .= $orderBy;
         return $statement;
 	}
 
@@ -479,7 +431,7 @@ abstract class Request {
 			$statement .= 'DISTINCT ';
 		}
 		
-		$statement .= 'T0.'.$field.') AS C';
+		$statement .= 'T0.`'.$field.'`) AS C';
 		$statement .= $this->generateSQLJoins();
 		$statement .= $this->generateSQLWhere();
         return $statement;
@@ -579,9 +531,14 @@ abstract class Request {
         return $sql;
 	}
 
-	private function generateSQLOrderBy() {
+    private function generateSQLOrderBy() {
+        if(sizeof($this->orderBy) === 0) {
+            $keys = array_keys($this->index);
+            $this->orderAscBy($keys[0], 'id');
+        }
+
 		$sql = "\n".'ORDER BY ';
-		$orders = Array();
+        $orders = Array();
 
 		foreach($this->orderBy as $clause) {
 			switch($clause['option']) {
@@ -601,10 +558,6 @@ abstract class Request {
 
 		$sql .= implode(',', $orders);
         return $sql;
-	}
-
-	private function generateSQLLimit() {
-		return "\n".'LIMIT '.$this->offset.','.$this->lines;
 	}
 
 	private function generateSQLOperator($condition) {
@@ -629,11 +582,14 @@ abstract class Request {
             else {
                 if(is_array($condition['value'])) {
                     foreach($condition['value'] as $key => $value) {
-                        $this->addBinding($propertyClass, $condition['value'][$key]);
+                        $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+                        $this->bindings[] = $value;
                     }
                 }
                 else {
-                    $this->addBinding($propertyClass, $condition['value']);
+                    $value = $condition['value'];
+                    $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+                    $this->bindings[] = $value;
                 }
             }
         }
@@ -677,32 +633,4 @@ abstract class Request {
 
 		return $clause;
 	}
-
-    private function addBinding($propertyClass, &$value) {
-        if(is_subclass_of($propertyClass, '\\Syra\\MySQL\\ModelObject')) {
-            $propertyClass = $propertyClass::getPropertyClass('id');
-        }
-
-        switch($propertyClass) {
-            case 'String':
-            case 'JSON':
-            case 'DateTime':
-                $this->prepareBindings[0] .= 's';
-                $value = (String) $value;
-                break;
-            case 'Float':
-                $this->prepareBindings[0] .= 'd';
-                $value = (Float) str_replace(',', '.', $value);
-                break;
-            case 'Integer':
-            case 'Timestamp':
-                $this->prepareBindings[0] .= 'i';
-                $value = (Integer) $value;
-                break;
-            default:
-                throw new \LogicException('Unhandled property class');
-        }
-
-        $this->prepareBindings[] =& $value;
-    }
 }

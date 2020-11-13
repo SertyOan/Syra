@@ -169,24 +169,15 @@ abstract class ModelObject {
             $class = static::DATABASE_CLASS;
             $database = $class::getWriter();
 
-			$stmt = 'DELETE FROM '.self::myTable().' WHERE `id`=';
-            // TODO use prepare statement instead
+			$sql = 'DELETE FROM '.self::myTable().' WHERE `id`=?';
 
             switch(static::$properties['id']['class']) {
-                case 'Integer':
-                    $id = (Integer) $this->id;
-                    break;
-                case 'String':
-                    $class = static::DATABASE_CLASS;
-                    $database = $class::getWriter();
-                    $id = "'".$database->escapeString($this->id)."'";
-                    break;
-                default:
-                    throw new Exception('Invalid class for id field');
+                case 'Integer': $id = (Integer) $this->id; break;
+                case 'String': $id = (String) $this->id; break;
+                default: throw new \Exception('Invalid class for id field');
             }
 
-            $stmt .= $id;
-            $database->query($stmt);
+            $database->query($sql, [$id]);
 			$this->setSaved(false);
 		}
 	}
@@ -194,7 +185,8 @@ abstract class ModelObject {
 	public function save() {
         $class = static::DATABASE_CLASS;
         $database = $class::getWriter();
-		$fields = Array();
+        $fields = Array();
+        $params = Array();
 
 		foreach(static::$properties as $property => $description) {
 			if($property == 'id') {
@@ -212,29 +204,27 @@ abstract class ModelObject {
 					case 'Float': $fields['`'.$property.'`'] = (Float) $this->$property; break;
 					case 'String':
 						if(isset($description['maxLength'])) {
-							$fields['`'.$property.'`'] = "'".$database->escapeString(substr($this->$property, 0, $description['maxLength']))."'";
+							$fields['`'.$property.'`'] = substr($this->$property, 0, $description['maxLength']);
 						}
 						else {
-							$fields['`'.$property.'`'] = "'".$database->escapeString($this->$property)."'";
+							$fields['`'.$property.'`'] = (String) $this->$property;
 						}
 						break;
 					case 'DateTime':
-						$fields['`'.$property.'`'] = "'".$this->$property->format('Y-m-d H:i:s')."'";
+						$fields['`'.$property.'`'] = $this->$property->format('Y-m-d H:i:s');
 						break;
 					case 'Timestamp':
 						$fields['`'.$property.'`'] = (Integer) $this->$property->format('U');
 						break;
 					case 'JSON':
-						$fields['`'.$property.'`'] = "'".$database->escapeString(json_encode($this->$property, JSON_UNESCAPED_SLASHES))."'";
+						$fields['`'.$property.'`'] = json_encode($this->$property, JSON_UNESCAPED_SLASHES);
 						break;
 					default:
 						if(isset($this->$property->id) && !is_null($this->$property->id)) {
                             switch(gettype($this->$property->id)) {
                                 case 'integer':
-                                    $fields['`'.$property.'`'] = $this->$property->id;
-                                    break;
                                 case 'string':
-                                    $fields['`'.$property.'`'] = "'".$database->escapeString($this->$property->id)."'";
+                                    $fields['`'.$property.'`'] = $this->$property->id;
                                     break;
                                 default:
                                     throw new Exception('ORM Error: invalid type for field');
@@ -245,25 +235,22 @@ abstract class ModelObject {
 		}
 
 		if($this->isSaved()) {
-			$stmt = 'UPDATE '.self::myTable().' SET ';
+			$sql = 'UPDATE '.self::myTable().' SET ';
 			$updatedFields = Array();
 
 			foreach($fields as $key => $value) {
-				$updatedFields[] = $key.'='.$value;
+                $updatedFields[] = $key.'=?';
+                $params[] = $value;
 			}
 
             switch(static::$properties['id']['class']) {
-                case 'Integer':
-                    $id = (Integer) $this->id;
-                    break;
-                case 'String':
-                    $id = "'".$database->escapeString($this->id)."'";
-                    break;
-                default:
-                    throw new Exception('Invalid class for id field');
+                case 'Integer': $id = (Integer) $this->id; break;
+                case 'String': $id = (String) $this->id; break;
+                default: throw new Exception('Invalid class for id field');
             }
 
-			$stmt .= implode(',', $updatedFields).' WHERE `id`='.$id;
+            $sql .= implode(',', $updatedFields).' WHERE `id`=?';
+            $params[] = $id;
 		}
 		else {
             if(!is_null($this->id)) {
@@ -272,23 +259,27 @@ abstract class ModelObject {
                         $fields['`id`'] = (Integer) $this->id;
                         break;
                     case 'String':
-                        $fields['`id`'] = "'".$database->escapeString($this->id)."'";
+                        $fields['`id`'] = (String) $this->id;
                         break;
                     default:
-                        throw new Exception('Invalid class for id field');
+                        throw new \Exception('Invalid class for id field');
                 }
             }
 
-			$stmt = 'INSERT INTO '.self::myTable().' (';
-			$stmt .= implode(',', array_keys($fields));
-			$stmt .= ') VALUES (';
-			$stmt .= implode(',', $fields).')';
+			$sql = 'INSERT INTO '.self::myTable().' (';
+			$sql .= implode(',', array_keys($fields));
+            $sql .= ') VALUES (';
+
+            $marks = array_fill(0, count($fields), '?');
+            $sql .= implode(',', $marks).')';
+
+            $params = array_values($fields);
 		}
 
-        $database->query($stmt);
+        $database->query($sql, $params);
 
 		if(!$this->isSaved() && is_null($this->id)) {
-			$this->id = $database->link->insert_id;
+			$this->id = $database->link->lastInsertId();
 		}
 
 		$this->__nulled = Array();

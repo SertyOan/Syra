@@ -30,77 +30,67 @@ class Database {
     }
 
     public function connect() {
-        if(!function_exists('mysqli_fetch_all')) {
-            throw new \Exception('mysqlnd is not enabled');
-        }
-
         if($this->isConnected()) {
             throw new \Exception('Database connection already established');
         }
 
-        $link = new \mysqli($this->hostname, $this->user, $this->password);
+        $dsn = 'mysql:host='.$this->hostname;
+        $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'];
 
-        if($link->connect_error) {
-            error_log('MySQL connect failed: '.$link->connect_error);
+        try {
+            $link = new \PDO($dsn, $this->user, $this->password, $options);
+        }
+        catch(\Exception $e) {
+            error_log('MySQL connect failed: '.$e->getMessage());
             throw new \Exception('Could not connect to database server');
         }
 
         $this->link = $link;
 
-        if(!$link->autocommit(false)) {
-            throw new \Exception('Could not disable autocommit on database connection');
-        }
-
-        if(!$link->set_charset('utf8')) {
-            throw new \Exception('Could not set charset on database connection');
+        if(!$link->beginTransaction()) {
+            throw new \Exception('Could not begin transaction on database connection');
         }
     }
 
     public function disconnect() {
         $this->checkConnection();
-
-		if(!$this->link->close()) {
-            throw new \Exception('Could not disconnect from database server');
-        }
-
         $this->link = null;
     }
 
     public function isConnected() {
-        return $this->link instanceof \mysqli;
+        return $this->link instanceof \PDO;
     }
 
-    public function query($statement) {
+    public function query($sql, $params) {
         $this->checkConnection();
         $this->queries++;
 
-		if(($result = $this->link->query($statement)) === false) {
-            error_log($statement);
-            error_log($this->link->error);
+        $statement = $this->link->prepare($sql);
+
+        if($statement === false) {
+            error_log('Could not prepare database query');
+            error_log($sql);
+            error_log(implode(' / ', $this->link->errorInfo()));
+			throw new \Exception('Could not prepare database query');
+        }
+
+        if($statement->execute($params) === false) {
+            error_log('Could not execute database query');
+            error_log($sql);
+            error_log(implode(' / ', $this->link->errorInfo()));
 			throw new \Exception('Could not execute database query');
         }
 
-        return $result;
+        return $statement;
     }
 
-    public function queryRows($statement) {
-        $result = $this->query($statement);
-        $data = Array();
+    public function queryRows($sql, $params) {
+        $statement = $this->query($sql, $params);
 
-		while($data[] = $result->fetch_assoc()) {
-            continue;
+        while($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            yield $row;
         }
-
-		$result->free();
-        array_pop($data);
-        return $data;
     }
-
-	public function escapeString($string) {
-        $this->checkConnection();
-
-		return $this->link->real_escape_string($string);
-	}
 
     public function commit() {
         $this->checkConnection();
