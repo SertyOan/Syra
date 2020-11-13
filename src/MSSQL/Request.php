@@ -398,24 +398,27 @@ abstract class Request {
 
     // NOTE SQL generation methods
 
-	private function generateDataSQL() {
-		$statement = $this->generateSQLSelect();
-		$statement .= $this->generateSQLJoins();
-        $statement .= $this->generateSQLWhere();
+    private function generateDataSQL() {
+        $joins = $this->generateSQLJoins();
+        $orderBy = $this->generateSQLOrderBy();
 
-        if(($this->lines !== 0 || $this->offset !== 0) && sizeof($this->orderBy) === 0) {
-            $keys = array_keys($this->index);
-            $this->orderAscBy($keys[0], 'id');
+		$statement = $this->generateSQLSelect();
+        $statement .= $joins;
+
+        if($this->lines !== 0 || $this->offset !== 0) {
+            $statement .= "\n".'INNER JOIN (';
+            $statement .= "\n".'SELECT DISTINCT T0.`id` ';
+            $statement .= $joins;
+            $statement .= $this->generateSQLWhere();
+            $statement .= $orderBy;
+            $statement .= "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
+            $statement .= ') AS Subset ON (Subset.id = T0.id)';
+        }
+        else {
+            $statement .= $this->generateSQLWhere();
         }
 
-		if(sizeof($this->orderBy) !== 0) {
-			$statement .= $this->generateSQLOrderBy();
-		}
-
-		if($this->lines !== 0 || $this->offset !== 0) {
-			$statement .= $this->generateSQLLimit();
-		}
-
+        $statement .= $orderBy;
         return $statement;
 	}
 
@@ -553,10 +556,6 @@ abstract class Request {
 
 		$sql .= implode(',', $orders);
         return $sql;
-	}
-
-    private function generateSQLLimit() {
-		return "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
 	}
 
 	private function generateSQLOperator($condition) {
