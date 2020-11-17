@@ -58,7 +58,7 @@ class Database {
         return $this->link instanceof \PDO;
     }
 
-    public function query($sql, $params) {
+    public function query($sql, $params = []) {
         $this->checkConnection();
         $this->queries++;
 
