@@ -249,7 +249,7 @@ abstract class ModelObject {
                 default: throw new Exception('Invalid class for id field');
             }
 
-            $sql .= implode(',', $updatedFields).' WHERE [id]='.$id;
+            $sql .= implode(',', $updatedFields).' WHERE [id]=?';
             $params[] = $id;
         }
         else {
