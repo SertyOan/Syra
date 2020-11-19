@@ -398,7 +398,7 @@ abstract class Request {
 
     // NOTE SQL generation methods
 
-    private function generateDataSQL() {
+    public function generateDataSQL() {
         $joins = $this->generateSQLJoins();
         $orderBy = $this->generateSQLOrderBy();
 
@@ -422,7 +422,7 @@ abstract class Request {
         return $statement;
     }
 
-    private function generateCountSQL($field, $distinct) {
+    public function generateCountSQL($field, $distinct) {
         $statement = 'SELECT COUNT(';
 
         if($distinct) {
