@@ -407,7 +407,7 @@ abstract class Request {
 
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
-            $statement .= "\n".'SELECT DISTINCT T0.`id` ';
+            $statement .= "\n".'SELECT DISTINCT T0.[id] ';
             $statement .= $joins;
             $statement .= $this->generateSQLWhere();
             $statement .= $orderBy;
