@@ -191,8 +191,8 @@ abstract class ModelObject {
     public function save() {
         $class = static::DATABASE_CLASS;
         $database = $class::getWriter();
-        $fields = Array();
-        $params = Array();
+        $fields = [];
+        $params = [];
 
         foreach(static::$properties as $property => $description) {
             if($property == 'id') {
@@ -201,36 +201,52 @@ abstract class ModelObject {
 
             if(is_null($this->{$property})) {
                 if(!empty($this->__nulled[$property])) {
-                    $fields['`'.$property.'`'] = null;
+                    $fields[] = '`'.$property.'`';
+                    $params[] = ['value' => null, 'type' => \PDO::PARAM_NULL];
                 }
             }
             else {
                 switch($description['class']) {
-                    case 'Integer': $fields['`'.$property.'`'] = (Integer) $this->$property; break;
-                    case 'Float': $fields['`'.$property.'`'] = (Float) $this->$property; break;
+                    case 'Integer':
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => (Integer) $this->$property, 'type' => \PDO::PARAM_INT];
+                        break;
+                    case 'Float':
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => (Float) $this->$property, 'type' => \PDO::PARAM_STR];
+                        break;
                     case 'String':
+                        $fields[] = '`'.$property.'`';
+                        $value = (String) $this->$property;
+
                         if(isset($description['maxLength'])) {
-                            $fields['`'.$property.'`'] = substr($this->$property, 0, $description['maxLength']);
+                            $value = substr($value, 0, $description['maxLength']);
                         }
-                        else {
-                            $fields['`'.$property.'`'] = (String) $this->$property;
-                        }
+
+                        $params[] = ['value' => $value, 'type' => \PDO::PARAM_STR];
                         break;
                     case 'DateTime':
-                        $fields['`'.$property.'`'] = $this->$property->format('Y-m-d H:i:s');
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => $this->$property->format('Y-m-d H:i:s'), 'type' => \PDO::PARAM_STR];
                         break;
                     case 'Timestamp':
-                        $fields['`'.$property.'`'] = (Integer) $this->$property->format('U');
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => (Integer) $this->$property->format('U'), 'type' => \PDO::PARAM_INT];
                         break;
                     case 'JSON':
-                        $fields['`'.$property.'`'] = json_encode($this->$property, JSON_UNESCAPED_SLASHES);
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => json_encode($this->$property, JSON_UNESCAPED_SLASHES), 'type' => \PDO::PARAM_STR];
                         break;
                     default:
                         if(isset($this->$property->id) && !is_null($this->$property->id)) {
+                            $fields[] = '`'.$property.'`';
+
                             switch(gettype($this->$property->id)) {
                                 case 'integer':
+                                    $params[] = ['value' => $this->$property->id, 'type' => \PDO::PARAM_INT];
+                                    break;
                                 case 'string':
-                                    $fields['`'.$property.'`'] = $this->$property->id;
+                                    $params[] = ['value' => $this->$property->id, 'type' => \PDO::PARAM_STR];
                                     break;
                                 default:
                                     throw new Exception('ORM Error: invalid type for field');
@@ -240,18 +256,14 @@ abstract class ModelObject {
             }
         }
 
-        $params = array_values($fields);
-
         if($this->isSaved()) {
             $sql = 'UPDATE '.self::myTable().' SET ';
-            $updatedFields = Array();
 
-            foreach($fields as $key => $value) {
-                $updatedFields[] = $key.'=?';
-                $params[] = $value;
-            }
+            $fields = array_map(function($field) {
+                return $field.'=?';
+            }, $fields);
 
-            $sql .= implode(',', $updatedFields).' WHERE `id`=?';
+            $sql .= implode(',', $fields).' WHERE `id`=?';
 
             switch(static::$properties['id']['class']) {
                 case 'Integer':
@@ -266,13 +278,13 @@ abstract class ModelObject {
         }
         else {
             if(!is_null($this->id)) {
+                $fields[] = '`id`';
+
                 switch(static::$properties['id']['class']) {
                     case 'Integer':
-                        $fields['`id`'] = (Integer) $this->id;
                         $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'String':
-                        $fields['`id`'] = (String) $this->id;
                         $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
                         break;
                     default:
@@ -281,7 +293,7 @@ abstract class ModelObject {
             }
 
             $sql = 'INSERT INTO '.self::myTable().' (';
-            $sql .= implode(',', array_keys($fields));
+            $sql .= implode(',', $fields);
             $sql .= ') VALUES (';
 
             $marks = array_fill(0, count($fields), '?');
