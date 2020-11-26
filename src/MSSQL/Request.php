@@ -399,16 +399,15 @@ abstract class Request {
     // NOTE SQL generation methods
 
     public function generateDataSQL() {
-        $joins = $this->generateSQLJoins();
         $orderBy = $this->generateSQLOrderBy();
 
         $statement = $this->generateSQLSelect();
-        $statement .= $joins;
+        $statement .= $this->generateSQLJoins();
 
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT T0.[id] ';
-            $statement .= $joins;
+            $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
             $statement .= $orderBy;
             $statement .= "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
@@ -580,14 +579,11 @@ abstract class Request {
             else {
                 if(is_array($condition['value'])) {
                     foreach($condition['value'] as $key => $value) {
-                        $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-                        $this->bindings[] = $value;
+                        $this->addBinding($propertyClass, $condition['value'][$key]);
                     }
                 }
                 else {
-                    $value = $condition['value'];
-                    $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-                    $this->bindings[] = $value;
+                    $this->addBinding($propertyClass, $condition['value']);
                 }
             }
         }
@@ -632,5 +628,29 @@ abstract class Request {
         }
 
         return $clause;
+    }
+
+    private function addBinding($propertyClass, &$value) {
+        if(is_subclass_of($propertyClass, self::OBJECTS_CLASS)) {
+            $propertyClass = $propertyClass::getPropertyClass('id');
+            $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+        }
+
+        switch($propertyClass) {
+            case 'String':
+            case 'JSON':
+            case 'DateTime':
+                $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
+                break;
+            case 'Float':
+                $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
+                break;
+            case 'Integer':
+            case 'Timestamp':
+                $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                break;
+            default:
+                throw new \LogicException('Unhandled property class');
+        }
     }
 }
