@@ -151,22 +151,22 @@ abstract class Request {
         $conditions =& $this->links[$index]['conditions'];
 
         if(sizeof($conditions) === 0) {
-            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
-            $close = false;
-            $open = !empty($matches[1]);
+            $close = 0;
+            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
-            $close = !empty($matches[1]);
-            $open = !empty($matches[3]);
+            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
         $conditions[] = Array(
@@ -185,22 +185,22 @@ abstract class Request {
 
     public function where($logic, $table, $field, $operator, $value = null, $option = null) {
         if(sizeof($this->conditions) === 0) {
-            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
             $close = false;
-            $open = !empty($matches[1]);
+            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
-            $close = !empty($matches[1]);
-            $open = !empty($matches[3]);
+            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
         // DEBUG if(!isset($this->index[$table])) {
@@ -506,22 +506,22 @@ abstract class Request {
         $sql = '';
 
         foreach($conditions as &$condition) {
-            if($condition['close'] === true) {
+            if($condition['close'] > 0) {
                 if($opened === 0) {
                     throw new \Exception('Cannot close not opened parenthesis');
                 }
 
-                $sql .= ')';
-                $opened--;
+                $sql .= str_repeat(')', $condition['close']);
+                $opened -= $condition['close'];
             }
 
             if(!empty($condition['logic'])) {
                 $sql .= ' '.$condition['logic'].' ';
             }
 
-            if($condition['open'] === true) {
-                $sql .= '(';
-                $opened++;
+            if($condition['open'] > 0) {
+                $sql .= str_repeat('(', $condition['open']);
+                $opened += $condition['open'];
             }
 
             $sql .= $this->generateSQLOperator($condition);
@@ -582,14 +582,11 @@ abstract class Request {
             else {
                 if(is_array($condition['value'])) {
                     foreach($condition['value'] as $key => $value) {
-                        $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-                        $this->bindings[] = $value;
+                        $this->addBinding($propertyClass, $condition['value'][$key]);
                     }
                 }
                 else {
-                    $value = $condition['value'];
-                    $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-                    $this->bindings[] = $value;
+                    $this->addBinding($propertyClass, $condition['value']);
                 }
             }
         }
@@ -632,5 +629,29 @@ abstract class Request {
         }
 
         return $clause;
+    }
+
+    private function addBinding($propertyClass, &$value) {
+        if(is_subclass_of($propertyClass, self::OBJECTS_CLASS)) {
+            $propertyClass = $propertyClass::getPropertyClass('id');
+            $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
+        }
+
+        switch($propertyClass) {
+            case 'String':
+            case 'JSON':
+            case 'DateTime':
+                $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
+                break;
+            case 'Float':
+                $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
+                break;
+            case 'Integer':
+            case 'Timestamp':
+                $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                break;
+            default:
+                throw new \LogicException('Unhandled property class');
+        }
     }
 }

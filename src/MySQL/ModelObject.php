@@ -170,14 +170,20 @@ abstract class ModelObject {
             $database = $class::getWriter();
 
             $sql = 'DELETE FROM '.self::myTable().' WHERE `id`=?';
+            $params = [];
 
             switch(static::$properties['id']['class']) {
-                case 'Integer': $id = (Integer) $this->id; break;
-                case 'String': $id = (String) $this->id; break;
-                default: throw new \Exception('Invalid class for id field');
+                case 'Integer':
+                    $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
+                    break;
+                case 'String':
+                    $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
+                    break;
+                default:
+                    throw new \Exception('Invalid class for id field');
             }
 
-            $database->query($sql, [$id]);
+            $database->query($sql, $params);
             $this->setSaved(false);
         }
     }
@@ -195,7 +201,7 @@ abstract class ModelObject {
 
             if(is_null($this->{$property})) {
                 if(!empty($this->__nulled[$property])) {
-                    $fields['`'.$property.'`'] = 'NULL';
+                    $fields['`'.$property.'`'] = null;
                 }
             }
             else {
@@ -234,6 +240,8 @@ abstract class ModelObject {
             }
         }
 
+        $params = array_values($fields);
+
         if($this->isSaved()) {
             $sql = 'UPDATE '.self::myTable().' SET ';
             $updatedFields = Array();
@@ -243,23 +251,29 @@ abstract class ModelObject {
                 $params[] = $value;
             }
 
-            switch(static::$properties['id']['class']) {
-                case 'Integer': $id = (Integer) $this->id; break;
-                case 'String': $id = (String) $this->id; break;
-                default: throw new Exception('Invalid class for id field');
-            }
-
             $sql .= implode(',', $updatedFields).' WHERE `id`=?';
-            $params[] = $id;
+
+            switch(static::$properties['id']['class']) {
+                case 'Integer':
+                    $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
+                    break;
+                case 'String':
+                    $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
+                    break;
+                default:
+                    throw new Exception('Invalid class for id field');
+            }
         }
         else {
             if(!is_null($this->id)) {
                 switch(static::$properties['id']['class']) {
                     case 'Integer':
                         $fields['`id`'] = (Integer) $this->id;
+                        $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'String':
                         $fields['`id`'] = (String) $this->id;
+                        $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
                         break;
                     default:
                         throw new \Exception('Invalid class for id field');
@@ -272,8 +286,6 @@ abstract class ModelObject {
 
             $marks = array_fill(0, count($fields), '?');
             $sql .= implode(',', $marks).')';
-
-            $params = array_values($fields);
         }
 
         $database->query($sql, $params);

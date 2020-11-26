@@ -74,7 +74,14 @@ class Database {
             throw new \Exception('Could not prepare database query');
         }
 
-        if($statement->execute($params) === false) {
+        $i = 1;
+
+        foreach($params as $param) {
+            $statement->bindParam($i, $param['value'], $param['type']);
+            $i++;
+        }
+
+        if($statement->execute() === false) {
             error_log('Could not execute database query');
             error_log($sql);
             error_log(implode(' / ', $this->link->errorInfo()));
