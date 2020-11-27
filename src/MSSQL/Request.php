@@ -406,7 +406,14 @@ abstract class Request {
 
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
-            $statement .= "\n".'SELECT DISTINCT T0.[id] ';
+            $statement .= "\n".'SELECT DISTINCT ';
+            $fields = ['T0.[id]'];
+
+            foreach($this->orderBy as $clause) {
+                $fields[] = 'T'.$clause['table'].'.['.$clause['field'].']';
+            }
+
+            $statement .= implode(',', $fields);
             $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
             $statement .= $orderBy;
