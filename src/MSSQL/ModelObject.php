@@ -263,7 +263,7 @@ abstract class ModelObject {
                 return $field.'=?';
             }, $fields);
 
-            $sql .= implode(',', $fields).' WHERE `id`=?';
+            $sql .= implode(',', $fields).' WHERE [id]=?';
 
             switch(static::$properties['id']['class']) {
                 case 'Integer':
