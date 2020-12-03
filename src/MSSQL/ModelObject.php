@@ -223,7 +223,13 @@ abstract class ModelObject {
                             $value = substr($value, 0, $description['maxLength']);
                         }
 
-                        $params[] = ['value' => $value, 'type' => \PDO::PARAM_STR];
+                        $param = ['value' => $value, 'type' => \PDO::PARAM_STR];
+
+                        if(!empty($description['driverOptions'])) {
+                            $param['driverOptions'] = $description['driverOptions'];
+                        }
+
+                        $params[] = $param;
                         break;
                     case 'DateTime':
                         $fields[] = '['.$property.']';
