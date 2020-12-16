@@ -604,6 +604,12 @@ abstract class Request {
             case '|':
                 $clause = $field.$operator.($link === false ? '?' : $link).'!=0';
                 break;
+            case '!&':
+                $clause = $field.'&'.($link === false ? '?' : $link).'=0';
+                break;
+            case '!|':
+                $clause = $field.'|'.($link === false ? '?' : $link).'=0';
+                break;
             case '>':
             case '<':
             case '>=':
