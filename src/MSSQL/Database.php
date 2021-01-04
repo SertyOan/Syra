@@ -82,7 +82,7 @@ class Database {
         if($statement->execute() === false) {
             error_log('Could not execute database query');
             error_log($sql);
-            error_log(implode(' / ', $this->link->errorInfo()));
+            error_log(implode(' / ', $statement->errorInfo()));
             throw new \Exception('Could not execute database query');
         }
 
