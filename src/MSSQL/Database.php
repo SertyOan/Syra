@@ -103,6 +103,10 @@ class Database {
         if(!$this->link->commit()) {
             throw new \Exception('Could not commit database transaction');
         }
+
+        if(!$this->link->beginTransaction()) {
+            throw new \Exception('Could not begin transaction on database connection');
+        }
     }
 
     public function rollback() {
@@ -110,6 +114,10 @@ class Database {
 
         if(!$this->link->rollback()) {
             throw new \Exception('Could not rollback database transaction');
+        }
+
+        if(!$this->link->beginTransaction()) {
+            throw new \Exception('Could not begin transaction on database connection');
         }
     }
 
