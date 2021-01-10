@@ -624,6 +624,9 @@ abstract class Request {
                     $clause = $field.' '.$operator.' (-1)';
                 }
                 break;
+            case 'SQL':
+                $clause = $field.' '.$condition['option'];
+                break;
             default:
                 throw new \LogicException('Invalid operator');
         }
