@@ -149,22 +149,22 @@ abstract class Request {
         $conditions =& $this->links[$index]['conditions'];
 
         if(sizeof($conditions) === 0) {
-            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
-            $close = false;
-            $open = !empty($matches[1]);
+            $close = 0;
+            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
-            $close = !empty($matches[1]);
-            $open = !empty($matches[3]);
+            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
         $conditions[] = Array(
@@ -183,22 +183,22 @@ abstract class Request {
 
     public function where($logic, $table, $field, $operator, $value = null, $option = null) {
         if(sizeof($this->conditions) === 0) {
-            if(preg_match('/^(\()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
 
             $logic = null;
-            $close = false;
-            $open = !empty($matches[1]);
+            $close = 0;
+            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\) )?(AND|OR)( \()?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
                 throw new \Exception('Invalid logic operator');
             }
     
             $logic = $matches[2];
-            $close = !empty($matches[1]);
-            $open = !empty($matches[3]);
+            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
         // DEBUG if(!isset($this->index[$table])) {
@@ -510,22 +510,22 @@ abstract class Request {
         $sql = '';
 
         foreach($conditions as &$condition) {
-            if($condition['close'] === true) {
+            if($condition['close'] > 0) {
                 if($opened === 0) {
                     throw new \Exception('Cannot close not opened parenthesis');
                 }
 
-                $sql .= ')';
-                $opened--;
+                $sql .= str_repeat(')', $condition['close']);
+                $opened -= $condition['close'];
             }
 
             if(!empty($condition['logic'])) {
                 $sql .= ' '.$condition['logic'].' ';
             }
 
-            if($condition['open'] === true) {
-                $sql .= '(';
-                $opened++;
+            if($condition['open'] > 0) {
+                $sql .= str_repeat('(', $condition['open']);
+                $opened += $condition['open'];
             }
 
             $sql .= $this->generateSQLOperator($condition);
