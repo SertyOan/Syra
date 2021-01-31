@@ -190,7 +190,7 @@ abstract class Request {
             }
 
             $logic = null;
-            $close = false;
+            $close = 0;
             $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
