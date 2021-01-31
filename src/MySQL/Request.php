@@ -401,16 +401,15 @@ abstract class Request {
     // NOTE SQL generation methods
 
     public function generateDataSQL() {
-        $joins = $this->generateSQLJoins();
         $orderBy = $this->generateSQLOrderBy();
 
         $statement = $this->generateSQLSelect();
-        $statement .= $joins;
+        $statement .= $this->generateSQLJoins();
 
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT T0.`id` ';
-            $statement .= $joins;
+            $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
             $statement .= $orderBy;
             $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
