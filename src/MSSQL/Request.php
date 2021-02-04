@@ -413,6 +413,10 @@ abstract class Request {
                 $fields[] = 'T'.$clause['table'].'.['.$clause['field'].']';
             }
 
+            if(!in_array('T0.[id]', $fields)) {
+                $fields[] = 'T0.[id]';
+            }
+
             $statement .= implode(',', $fields);
             $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
