@@ -12,7 +12,7 @@ abstract class ModelObject {
     }
 
     final public static function getPropertyClass($property) {
-        if(!preg_match('@^[a-z0-9]+$@i', $property)) {
+        if(!preg_match('@^[a-z0-9_]+$@i', $property)) {
             throw new \Exception('Property name is invalid');
         }
 
