@@ -4,13 +4,13 @@ namespace Syra\Oracle;
 class Database {
     private
         $link,
-        $hostname,
+        $tns,
         $user,
         $password,
         $queries = 0;
 
-    public function __construct($hostname, $user, $password) {
-        $this->hostname = $hostname;
+    public function __construct($tns, $user, $password) {
+        $this->tns = $tns;
         $this->user = $user;
         $this->password = $password;
     }
@@ -18,7 +18,7 @@ class Database {
     public function __get($property) {
         switch($property) {
             case 'user':
-            case 'hostname':
+            case 'tns':
             case 'link':
             case 'queries':
                 return $this->{$property};
@@ -34,12 +34,7 @@ class Database {
             throw new \Exception('Database connection already established');
         }
 
-        $tns = '(DESCRIPTION =
-            (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = '.$this->hostname.')(PORT = 1521)))
-            (CONNECT_DATA = (SERVICE_NAME = HRPRD_ppss52))
-        )';
-
-        $dsn = 'oci:dbname='.$tns.';charset=AL32UTF8';
+        $dsn = 'oci:dbname='.$this->tns.';charset=AL32UTF8';
         $options = [];
 
         try {
