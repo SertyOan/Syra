@@ -75,7 +75,7 @@ abstract class ModelObject {
                     throw new \Exception('Collections can only contain model objects');
                 }
 
-                $this->__collections[$property][$value->id] = $value;
+                $this->__collections[$property][$object->id] = $object;
             }
         }
         else {
