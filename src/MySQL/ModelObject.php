@@ -303,7 +303,7 @@ abstract class ModelObject {
         $database->query($sql, $params);
 
         if(!$this->isSaved() && is_null($this->id)) {
-            $this->id = $database->link->lastInsertId();
+            $this->__set('id', $database->link->lastInsertId());
         }
 
         $this->__nulled = Array();
