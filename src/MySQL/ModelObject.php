@@ -58,7 +58,7 @@ abstract class ModelObject {
                         }
                         else {
                             $this->{$property} = new $class();
-                            $this->{$property}->id = $value;
+                            $this->{$property}->__set('id', $value);
                         }
                 }
             }
