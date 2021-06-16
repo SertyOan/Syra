@@ -166,6 +166,17 @@ $bars = \App\CustomRequest::get('Bar')->withFields('id', 'name', 'createdAt')
     ->mapAsObjects();
 ```
 
+## Add additional condition between fields of two tables of same request
+```php
+$reference = new \stdClass;
+$reference->table = 'Bar';
+$reference->field = 'language';
+
+$foobars = \App\CustomRequest::get('Foo')->withFields('id', 'language', 'name')
+    ->leftJoin('Bar', 'Bars')->on('Foo', 'id', 'foo')->with('', 'language', '=', $reference)->withFields('id', 'foo', 'language')
+    ->mapAsObject();
+```
+
 ## Requesting as associative arrays (for latter JSON encoding)
 ```php
 $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
@@ -203,15 +214,4 @@ $foobar = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
     ->mapAsObject();
 $foobar->delete();
 \App\Database::getWriter()->commit();
-```
-
-# Add additional condition between fields of two tables of same request
-```php
-$reference = new \stdClass;
-$reference->table = 'Bar';
-$reference->field = 'language';
-
-$foobars = \App\CustomRequest::get('Foo')->withFields('id', 'language', 'name')
-    ->leftJoin('Bar', 'Bars')->on('Foo', 'id', 'foo')->with('', 'language', '=', $reference)->withFields('id', 'foo', 'language')
-    ->mapAsObject();
 ```
