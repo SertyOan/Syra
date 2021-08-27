@@ -407,14 +407,10 @@ abstract class Request {
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT ';
-            $fields = [];
+            $fields = ['T0.[id]'];
 
-            foreach($this->orderBy as $clause) {
-                $fields[] = 'T'.$clause['table'].'.['.$clause['field'].']';
-            }
-
-            if(!in_array('T0.[id]', $fields)) {
-                $fields[] = 'T0.[id]';
+            foreach($this->orderBy as $index => $clause) {
+                $fields[] = 'T'.$clause['table'].'.['.$clause['field'].'] AS ORD'.$index;
             }
 
             $statement .= implode(',', $fields);
