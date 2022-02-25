@@ -75,7 +75,7 @@ class Database {
 
         foreach($params as $param) {
             $driverOptions = empty($param['driverOptions']) ? null : $param['driverOptions'];
-            $statement->bindParam($i, $param['value'], $param['type'], null, $driverOptions);
+            $statement->bindParam($i, $param['value'], $param['type'], 0, $driverOptions);
             $i++;
         }
 
