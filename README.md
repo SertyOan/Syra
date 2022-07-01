@@ -13,7 +13,7 @@ You need to create two classes.
 
 ```php
 namespace App;
-class CustomDatabase implements \Syra\MySQL\Database {
+class CustomDatabase implements \Syra\DatabaseInterface {
     private static
         $writer,
         $reader;
