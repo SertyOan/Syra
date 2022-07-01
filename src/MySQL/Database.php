@@ -91,7 +91,7 @@ class Database {
         return $statement;
     }
 
-    public function queryRows($sql, $params) {
+    public function queryRows($sql, $params = []) {
         $statement = $this->query($sql, $params);
 
         while($row = $statement->fetch(\PDO::FETCH_ASSOC)) {

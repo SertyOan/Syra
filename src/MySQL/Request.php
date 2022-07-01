@@ -114,22 +114,23 @@ abstract class Request {
         return $this;
     }
 
-    public function leftJoin($table, $alias = false) {
-        return $this->link($table, $alias, false);
+    public function leftJoin($table, $alias = false, $index = '') {
+        return $this->link($table, $alias, false, $index);
     }
 
-    public function innerJoin($table, $alias = false) {
-        return $this->link($table, $alias, true);
+    public function innerJoin($table, $alias = false, $index = '') {
+        return $this->link($table, $alias, true, $index);
     }
 
-    private function link($table, $alias = false, $strictly = false) {
+    private function link($table, $alias = false, $strictly = false, $index = '') {
         $this->addTable($table);
         $index = sizeof($this->classes) - 1;
 
         $this->links[$index] = Array(
             'joinType' => ($strictly ? self::INNER_JOIN : self::LEFT_JOIN),
             'alias' => $alias,
-            'conditions' => Array()
+            'conditions' => Array(),
+            'index' => $index
         );
         return $this;
     }
@@ -406,6 +407,7 @@ abstract class Request {
         $statement = $this->generateSQLSelect();
         $statement .= $this->generateSQLJoins();
 
+        // TODO no need if no link is 1..n 
         if($this->lines !== 0 || $this->offset !== 0) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT T0.`id` ';
@@ -471,6 +473,10 @@ abstract class Request {
             $sql .= ' ON (T'.$link['leftTableIndex'].'.`'.$link['leftTableField'].'`=T'.$rightTableIndex.'.`'.$link['rightTableField'].'`';
             $sql .= $this->generateSQLJoinConditions($rightTableIndex);
             $sql .= ')';
+
+            if(!empty($link['index'])) {
+                $sql .= ' USE INDEX(`'.$link['index'].'`) ';
+            }
         }
 
         return $sql;
