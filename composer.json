@@ -1,6 +1,7 @@
 {
     "name": "osyra/syra",
     "type": "library",
+    "license": "MIT",
     "require": {
         "php": ">=7.3.0"
     },
