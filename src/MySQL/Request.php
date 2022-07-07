@@ -13,6 +13,7 @@ abstract class Request {
         OPTION_YEAR = 4;
 
     private
+        $customs = Array(),
         $classes = Array(),
         $index = Array(),
         $fields = Array(),
@@ -27,7 +28,7 @@ abstract class Request {
         return new static($table);
     }
 
-    private function __construct($table) {
+    private function __construct($table, $customSQL = null) {
         $class = static::DATABASE_CLASS;
 
         if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
@@ -40,12 +41,12 @@ abstract class Request {
             throw new \Exception('Invalid reader database class');
         }
 
-        $this->addTable($table);
+        $this->addTable($table, customSQL: $customSQL);
     }
 
     // NOTE request build methods
 
-    private function addTable($table) {
+    private function addTable($table, $customSQL = null) {
         $class = $this->buildClassFromTable($table);
 
         if(!is_subclass_of($class, self::OBJECTS_CLASS)) {
@@ -68,6 +69,10 @@ abstract class Request {
             
         $this->index[$table.'::'.$i] = $index;
         $this->fields[$index] = Array();
+
+        if(!empty($customSQL)) {
+            $this->customs['TABLE_'.$index] = $customSQL;
+        }
     }
 
     public function withFields() {
@@ -114,23 +119,22 @@ abstract class Request {
         return $this;
     }
 
-    public function leftJoin($table, $alias = false, $index = '') {
-        return $this->link($table, $alias, false, $index);
+    public function leftJoin($table, $alias = null, $customSQL = null) {
+        return $this->link($table, alias: $alias, customSQL: $customSQL);
     }
 
-    public function innerJoin($table, $alias = false, $index = '') {
-        return $this->link($table, $alias, true, $index);
+    public function innerJoin($table, $alias = null, $customSQL = null) {
+        return $this->link($table, alias: $alias, strictly: true, customSQL: $customSQL);
     }
 
-    private function link($table, $alias = false, $strictly = false, $index = '') {
-        $this->addTable($table);
+    private function link($table, $alias = null, $strictly = false, $customSQL = null) {
+        $this->addTable($table, customSQL: $customSQL);
         $index = sizeof($this->classes) - 1;
 
         $this->links[$index] = Array(
             'joinType' => ($strictly ? self::INNER_JOIN : self::LEFT_JOIN),
             'alias' => $alias,
-            'conditions' => Array(),
-            'index' => $index
+            'conditions' => Array()
         );
         return $this;
     }
@@ -455,6 +459,11 @@ abstract class Request {
     private function generateSQLJoins() {
         $root = $this->classes[0];
         $sql = "\n".'FROM '.$root::myTable().' T0';
+        $customKey = 'TABLE_0';
+
+        if(!empty($this->customs[$customKey])) {
+            $sql .= ' '.$this->customs[$customKey].' ';
+        }
 
         foreach($this->links as $rightTableIndex => $link) {
             if($link['joinType'] == Request::LEFT_JOIN) {
@@ -474,8 +483,10 @@ abstract class Request {
             $sql .= $this->generateSQLJoinConditions($rightTableIndex);
             $sql .= ')';
 
-            if(!empty($link['index'])) {
-                $sql .= ' USE INDEX(`'.$link['index'].'`) ';
+            $customKey = 'TABLE_'.$rightTableIndex;
+
+            if(!empty($this->customs[$customKey])) {
+                $sql .= ' '.$this->customs[$customKey].' ';
             }
         }
 
