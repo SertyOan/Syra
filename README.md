@@ -177,6 +177,14 @@ $foobars = \App\CustomRequest::get('Foo')->withFields('id', 'language', 'name')
     ->mapAsObject();
 ```
 
+## Using same table multiple times
+```php
+$bars = \App\CustomRequest::get('Bar')->withFields('id', 'name')
+    ->leftJoin('Bar')->on('Bar', 'parent')->withFields('id', 'name') # equivalent to ->on('Bar::1', 'parent')
+    ->leftJoin('Bar')->on('Bar::2', 'parent')->withFields('id', 'name')
+    ->mapAsObjects();
+```
+
 ## Requesting as associative arrays (for latter JSON encoding)
 ```php
 $foobars = \App\CustomRequest::get('Foobar')->withFields('id', 'name')
