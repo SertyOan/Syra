@@ -4,25 +4,23 @@ namespace Syra\MySQL;
 use Syra\Reference;
 
 abstract class Request {
-    const
-        OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject',
-        LEFT_JOIN = 1,
-        INNER_JOIN = 2,
-        OPTION_DAY = 1,
-        OPTION_MONTH = 2,
-        OPTION_YEAR = 4;
+    const OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject';
+    const LEFT_JOIN = 1;
+    const INNER_JOIN = 2;
+    const OPTION_DAY = 1;
+    const OPTION_MONTH = 2;
+    const OPTION_YEAR = 4;
 
-    private
-        $customs = Array(),
-        $classes = Array(),
-        $index = Array(),
-        $fields = Array(),
-        $orderBy = Array(),
-        $links = Array(),
-        $conditions = Array(),
-        $bindings,
-        $offset = 0,
-        $lines = 0;
+    private $customs = [];
+    private $classes = [];
+    private $index = [];
+    private $fields = [];
+    private $orderBy = [];
+    private $links = [];
+    private $conditions = [];
+    private $bindings;
+    private $offset = 0;
+    private $lines = 0;
 
     public static function get($table) {
         return new static($table);
