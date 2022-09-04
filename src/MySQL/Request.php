@@ -147,7 +147,7 @@ abstract class Request {
         $class = $this->classes[$index];
 
         if(!$class::hasProperty($field)) {
-            throw new \Exception('Field does not exists');
+            throw new \Exception('Field does not exist');
         }
 
         $conditions =& $this->links[$index]['conditions'];
