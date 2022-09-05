@@ -413,6 +413,7 @@ abstract class Request {
             $statement .= "\n".'SELECT DISTINCT T0.`id` ';
             $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
+            $statement .= "\n".'GROUP BY T0.`id` ';
             $statement .= $orderBy;
             $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
             $statement .= ') AS Subset ON (Subset.id = T0.id)';
