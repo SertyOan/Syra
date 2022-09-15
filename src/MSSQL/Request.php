@@ -99,9 +99,9 @@ abstract class Request {
     }
 
     public function on($leftTable, $leftTableField, $rightTableField = 'id') {
-        // DEBUG if(!isset($this->index[$leftTable])) {
-        // DEBUG     throw new \Exception('Invalid table');
-        // DEBUG }
+        if(!isset($this->index[$leftTable])) {
+            throw new \InvalidArgumentException('Invalid table referenced');
+        }
 
         $rightTableIndex = sizeof($this->classes) - 1;
         $leftTableIndex = $this->index[$leftTable];
@@ -133,17 +133,16 @@ abstract class Request {
 
     public function with($logic, $field, $operator, $value = null, $option = null) {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
-        // DEBUG if(sizeof($this->classes) <= 1) {
-        // DEBUG     throw new \Exception('No class linked yet');
-        // DEBUG }
+        if(sizeof($this->classes) <= 1) {
+            throw new \InvalidArgumentException('No class linked yet');
+        }
 
         $index = sizeof($this->classes) - 1;
+        $class = $this->classes[$index];
 
-        // DEBUG $class = $this->classes[$index];
-
-        // DEBUG if(!$class::hasProperty($field)) {
-        // DEBUG     throw new \Exception('Field does not exists');
-        // DEBUG }
+        if(!$class::hasProperty($field)) {
+            throw new \Exception('Field does not exist');
+        }
 
         $conditions =& $this->links[$index]['conditions'];
 
@@ -200,17 +199,16 @@ abstract class Request {
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
-        // DEBUG if(!isset($this->index[$table])) {
-        // DEBUG     throw new \Exception('Invalid table');
-        // DEBUG }
+        if(!isset($this->index[$table])) {
+            throw new \Exception('Invalid table specified');
+        }
 
         $index = $this->index[$table];
+        $class = $this->classes[$index];
 
-        // DEBUG $class = $this->classes[$index];
-
-        // DEBUG if(!$class::hasProperty($field)) {
-        // DEBUG     throw new \Exception('CodeError::property '.$field.' does not exists');
-        // DEBUG }
+        if(!$class::hasProperty($field)) {
+            throw new \Exception('Property specified does not exist in '.$table);
+        }
 
         $this->conditions[] = Array(
             'logic' => $logic,
@@ -235,9 +233,9 @@ abstract class Request {
     }
 
     private function orderBy($table, $field, $option, $direction) {
-        // DEBUG if(!isset($this->index[$table])) {
-        // DEBUG     throw new \Exception('Table not included in request');
-        // DEBUG }
+        if(!isset($this->index[$table])) {
+            throw new \Exception('Table not included in request');
+        }
 
         $index = $this->index[$table];
         $class = $this->classes[$index];
