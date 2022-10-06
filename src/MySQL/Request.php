@@ -1,7 +1,7 @@
 <?php
 namespace Syra\MySQL;
 
-use Syra\Reference;
+use Syra\Reference; // TODO ????
 
 abstract class Request {
     const OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject';
@@ -413,8 +413,7 @@ abstract class Request {
             $statement .= "\n".'SELECT DISTINCT T0.`id` ';
             $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
-            $statement .= "\n".'GROUP BY T0.`id` ';
-            $statement .= $orderBy;
+            $statement .= "\n".$orderBy;
             $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
             $statement .= ') AS Subset ON (Subset.id = T0.id)';
         }
