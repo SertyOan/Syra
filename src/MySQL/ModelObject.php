@@ -255,7 +255,7 @@ abstract class ModelObject {
                         $params[] = ['value' => json_encode($this->$property, JSON_UNESCAPED_SLASHES), 'type' => \PDO::PARAM_STR];
                         break;
                     default:
-                        if (enum_exists($class)) {
+                        if (enum_exists($description['class'])) {
                             $fields[] = '`'.$property.'`';
                             switch(gettype($this->$property->value)) {
                                 case 'integer':
