@@ -255,7 +255,7 @@ abstract class ModelObject {
                                     $params[] = ['value' => $this->$property->id, 'type' => \PDO::PARAM_STR];
                                     break;
                                 default:
-                                    throw new Exception('ORM Error: invalid type for field');
+                                    throw new \Exception('ORM Error: invalid type for field');
                             }
                         }
                 }
@@ -279,7 +279,7 @@ abstract class ModelObject {
                     $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
                     break;
                 default:
-                    throw new Exception('Invalid class for id field');
+                    throw new \Exception('Invalid class for id field');
             }
         }
         else {
