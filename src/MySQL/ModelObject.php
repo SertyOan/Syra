@@ -49,19 +49,22 @@ abstract class ModelObject {
                     case 'DateTime': $this->$property = $value instanceof \DateTime ? $value : new \DateTime((String) $value); break;
                     case 'Timestamp': $this->$property = $value instanceof \DateTime ? $value : new \DateTime('@'.((Integer) $value)); break;
                     default:
-                        if (enum_exists($class)) {
+                        if(enum_exists($class)) {
                             if($value instanceof $class) {
                                 $this->{$property} = $value;
-                            } else {
+                            }
+                            else {
                                 $this->{$property} = $class::from($value);
                             }
-                        } elseif(is_object($value)) {
+                        }
+                        else if(is_object($value)) {
                             if(!($value instanceof $class)) {
                                 throw new \Exception('Property '.$property.' set with wrong class for '.get_called_class());
                             }
 
                             $this->{$property} = $value;
-                        } else {
+                        }
+                        else {
                             $this->{$property} = new $class();
                             $this->{$property}->__set('id', $value);
                         }
@@ -102,10 +105,10 @@ abstract class ModelObject {
                     case 'Timestamp':
                         break;
                     default:
-                        if (enum_exists($class)) {
-                            // enum can't be instantiated
+                        if(enum_exists($class)) { // enum can't be instantiated
                             break;
                         }
+
                         $this->{$property} = new $class();
                 }
             }
@@ -148,6 +151,7 @@ abstract class ModelObject {
         foreach(static::$properties as $property => $description) {
             if(!is_null($this->$property)) {
                 $class = $description['class'];
+
                 switch($class) {
                     case 'Integer': $array[$property] = (Integer) $this->$property; break;
                     case 'Float': $array[$property] = (Float) $this->$property; break;
@@ -156,14 +160,10 @@ abstract class ModelObject {
                     case 'Timestamp': $array[$property] = (Integer) $this->$property->format('U'); break;
                     case 'JSON': $array[$property] = $this->$property; break;
                     default:
-                        if ($this->$property instanceof ModelObject) {
-                            if( !is_null($this->$property->id) ) {
-                                $array[$property] = $this->$property->asArray();
-                            } else {
-                                $array[$property] = null;
-                            }
-                        } else {
-                            // copy object as is. enum fall in this case
+                        if(($this->$property instanceof ModelObject) && !is_null($this->$property->id)) {
+                            $array[$property] = $this->$property->asArray();
+                        }
+                        else if(enum_exists($class)) {
                             $array[$property] = $this->$property;
                         }
                 }
@@ -223,7 +223,9 @@ abstract class ModelObject {
                 }
             }
             else {
-                switch($description['class']) {
+                $class = $description['class'];
+
+                switch($class) {
                     case 'Integer':
                         $fields[] = '`'.$property.'`';
                         $params[] = ['value' => (Integer) $this->$property, 'type' => \PDO::PARAM_INT];
@@ -255,8 +257,9 @@ abstract class ModelObject {
                         $params[] = ['value' => json_encode($this->$property, JSON_UNESCAPED_SLASHES), 'type' => \PDO::PARAM_STR];
                         break;
                     default:
-                        if (enum_exists($description['class'])) {
+                        if(enum_exists($class)) {
                             $fields[] = '`'.$property.'`';
+
                             switch(gettype($this->$property->value)) {
                                 case 'integer':
                                     $params[] = ['value' => (Integer) $this->$property->value, 'type' => \PDO::PARAM_INT];
@@ -265,9 +268,10 @@ abstract class ModelObject {
                                     $params[] = ['value' => (String) $this->$property->value, 'type' => \PDO::PARAM_STR];
                                     break;
                                 default:
-                                    throw new Exception('ORM Error: invalid type for field');
+                                    throw new \Exception('ORM Error: invalid type for enum field');
                             }
-                        } elseif (isset($this->$property->id) && !is_null($this->$property->id)) {
+                        }
+                        else if(isset($this->$property->id) && !is_null($this->$property->id)) {
                             $fields[] = '`'.$property.'`';
 
                             switch(gettype($this->$property->id)) {

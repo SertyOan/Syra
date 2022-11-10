@@ -610,6 +610,14 @@ abstract class Request {
                 break;
             case '&':
             case '|':
+                $clause = $field.$operator.($link === false ? '?' : $link).'!=0';
+                break;
+            case '!&':
+                $clause = $field.'&'.($link === false ? '?' : $link).'=0';
+                break;
+            case '!|':
+                $clause = $field.'|'.($link === false ? '?' : $link).'=0';
+                break;
             case '>':
             case '<':
             case '>=':
@@ -650,15 +658,17 @@ abstract class Request {
         if(is_subclass_of($propertyClass, self::OBJECTS_CLASS)) {
             $propertyClass = $propertyClass::getPropertyClass('id');
             $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-        }  elseif (enum_exists($propertyClass)) {
-            if ($value instanceof $propertyClass) {
+        } 
+        else if(enum_exists($propertyClass)) {
+            if($value instanceof $propertyClass) {
                 $value = $value->value;
             }
+
             $propertyClass = gettype($value);
+            $propertyClass = ucfirst($propertyClass);
         }
 
         switch($propertyClass) {
-            case 'string':  // from above gettype
             case 'String':
             case 'JSON':
             case 'DateTime':
@@ -667,7 +677,6 @@ abstract class Request {
             case 'Float':
                 $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
                 break;
-            case 'integer':  // from above gettype
             case 'Integer':
             case 'Timestamp':
                 $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
