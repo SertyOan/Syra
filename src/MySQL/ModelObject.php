@@ -54,7 +54,13 @@ abstract class ModelObject {
                                 $this->{$property} = $value;
                             }
                             else {
-                                $this->{$property} = $class::from($value);
+                                $back = $class::tryFrom($value);
+
+                                if(is_null($back)) {
+                                    throw new \Exception('Property '.$property.' set with an invalid backing value for enum');
+                                }
+
+                                $this->{$property} = $back;
                             }
                         }
                         else if(is_object($value)) {
