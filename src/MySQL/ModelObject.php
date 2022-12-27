@@ -2,10 +2,9 @@
 namespace Syra\MySQL;
 
 abstract class ModelObject {
-    private
-        $__inDatabase = false, // TODO review naming
-        $__nulled = Array(),
-        $__collections = Array();
+    private $__inDatabase = false; // TODO review naming
+    private $__nulled = Array();
+    private $__collections = Array();
 
     final public static function hasProperty($property) {
         return isset(static::$properties[$property]);
