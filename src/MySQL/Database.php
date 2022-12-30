@@ -2,30 +2,31 @@
 namespace Syra\MySQL;
 
 class Database {
-    private
-        $link,
-        $hostname,
-        $user,
-        $password,
-        $queries = 0;
+    private \PDO $link;
+    private string $dsn;
+    private string $user;
+    private string $password;
+    private string $charset;
+    private int $queries = 0;
 
-    public function __construct($hostname, $user, $password) {
-        $this->hostname = $hostname;
+    public function __construct($dsn, $user, $password, $charset = 'utf8mb4') {
+        $this->dsn = $dsn;
         $this->user = $user;
         $this->password = $password;
+        $this->charset = $charset;
     }
 
     public function __get($property) {
         switch($property) {
-            case 'user':
-            case 'hostname':
-            case 'link':
-            case 'queries':
-                return $this->{$property};
-            case 'password':
-                throw new \Exception('Property is private');
-            default:
-                throw new \Exception('Property does not exist');
+        case 'dsn':
+        case 'user':
+        case 'link':
+        case 'queries':
+            return $this->{$property};
+        case 'password':
+            throw new \Exception('Property is private');
+        default:
+            throw new \Exception('Property does not exist');
         }
     }
 
@@ -34,11 +35,10 @@ class Database {
             throw new \Exception('Database connection already established');
         }
 
-        $dsn = 'mysql:host='.$this->hostname;
-        $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'];
+        $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES '.$charset];
 
         try {
-            $link = new \PDO($dsn, $this->user, $this->password, $options);
+            $link = new \PDO($this->dsn, $this->user, $this->password, $options);
         }
         catch(\Exception $e) {
             error_log('MySQL connect failed: '.$e->getMessage());
@@ -77,7 +77,8 @@ class Database {
         $i = 1;
 
         foreach($params as $param) {
-            $statement->bindParam($i, $param['value'], $param['type']);
+            $driverOptions = empty($param['driverOptions']) ? null : $param['driverOptions'];
+            $statement->bindParam($i, $param['value'], $param['type'], 0, $driverOptions);
             $i++;
         }
 
