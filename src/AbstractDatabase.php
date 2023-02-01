@@ -2,7 +2,7 @@
 namespace Syra;
 
 abstract class AbstractDatabase {
-    protected \PDO $link;
+    protected ?\PDO $link = null;
     protected string $dsn;
     protected string $user;
     protected string $password;
