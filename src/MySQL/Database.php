@@ -31,7 +31,7 @@ class Database extends AbstractDatabase {
             throw new \Exception('Database connection already established');
         }
 
-        $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES '.$charset];
+        $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES '.$this->charset];
 
         try {
             $link = new \PDO($this->dsn, $this->user, $this->password, $options);
