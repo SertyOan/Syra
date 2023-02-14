@@ -44,7 +44,7 @@ class CustomDatabase implements \Syra\DatabaseInterface {
 
 ```php
 namespace App;
-class CustomRequest extends \Syra\MySQL\DataRequest {
+class CustomRequest extends \Syra\MySQL\Request {
     const
         DATABASE_CLASS = '\\App\\CustomDatabase';
 
