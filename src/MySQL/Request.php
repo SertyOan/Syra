@@ -1,7 +1,7 @@
 <?php
 namespace Syra\MySQL;
 
-use Syra\Reference; // TODO ????
+use Syra\Reference;
 
 abstract class Request {
     const OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject';
