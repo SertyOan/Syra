@@ -11,6 +11,7 @@ abstract class Request {
     const OPTION_MONTH = 2;
     const OPTION_YEAR = 4;
 
+    private $database;
     private $customs = [];
     private $classes = [];
     private $index = [];
@@ -26,7 +27,7 @@ abstract class Request {
         return new static($table);
     }
 
-    private function __construct($table, $customSQL = null) {
+    private function __construct(string $table, string $customSQL = null) {
         $class = static::DATABASE_CLASS;
 
         if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
