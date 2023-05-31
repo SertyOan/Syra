@@ -9,6 +9,7 @@ abstract class Request {
     const OPTION_MONTH = 2;
     const OPTION_YEAR = 4;
 
+    private $database;
     private $customs = [];
     private $classes = [];
     private $index = [];
