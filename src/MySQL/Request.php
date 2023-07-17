@@ -204,8 +204,8 @@ abstract class Request {
 
     public function where($logic, $table, $field, $operator, $value = null, $option = null) {
         if(sizeof($this->conditions) === 0) {
-            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
-                throw new \Exception('Invalid logic operator');
+            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) === false) {
+                throw new \Exception('Invalid logic operator for first condition');
             }
 
             $logic = null;
