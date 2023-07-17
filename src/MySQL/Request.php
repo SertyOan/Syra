@@ -628,7 +628,8 @@ abstract class Request {
                 $clause = $field.$operator.($link === false ? '?' : $link);
                 break;
             case 'LIKE':
-                $clause = $field.' LIKE ?';
+            case 'NOT LIKE':
+                $clause = $field . ' ' . $operator . ' ?';
                 break;
             case 'IN':
             case 'NOT IN':
