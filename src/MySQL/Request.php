@@ -69,22 +69,8 @@ abstract class Request {
         $properties = [];
 
         for($i = 0, $c = func_num_args(); $i < $c; $i++) {
-            $argument = func_get_arg($i);
+            $property = func_get_arg($i);
 
-            if(is_array($argument)) {
-                foreach($argument as $property) {
-                    $properties[] = $property;
-                }
-            }
-            else if(is_string($argument)) {
-                $properties[] = $argument;
-            }
-            else {
-                throw new \InvalidArgumentException('Arguments accepted are only arrays or strings');
-            }
-        }
-
-        foreach($properties as $property) {
             if(!is_string($property)) {
                 throw new \InvalidArgumentException('All properties must be strings');
             }
@@ -492,15 +478,16 @@ abstract class Request {
             $rightClass = $this->classes[$rightTableIndex];
 
             $sql .= $rightClass::myTable().' T'.$rightTableIndex;
-            $sql .= ' ON (T'.$link['leftTableIndex'].'.`'.$link['leftTableField'].'`=T'.$rightTableIndex.'.`'.$link['rightTableField'].'`';
-            $sql .= $this->generateSQLJoinConditions($rightTableIndex);
-            $sql .= ')';
 
             $customKey = 'TABLE_'.$rightTableIndex;
 
             if(!empty($this->customs[$customKey])) {
                 $sql .= ' '.$this->customs[$customKey].' ';
             }
+
+            $sql .= ' ON (T'.$link['leftTableIndex'].'.`'.$link['leftTableField'].'`=T'.$rightTableIndex.'.`'.$link['rightTableField'].'`';
+            $sql .= $this->generateSQLJoinConditions($rightTableIndex);
+            $sql .= ')';
         }
 
         return $sql;
