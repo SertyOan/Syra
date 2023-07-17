@@ -66,15 +66,31 @@ abstract class Request {
         $index = sizeof($this->classes) - 1;
         $class = end($this->classes);
 
-        for($i = 0, $c = func_num_args(); $i < $c; $i++) {
-            $property = func_get_arg($i);
+        $properties = [];
 
+        for($i = 0, $c = func_num_args(); $i < $c; $i++) {
+            $argument = func_get_arg($i);
+
+            if(is_array($argument)) {
+                foreach($argument as $property) {
+                    $properties[] = $property;
+                }
+            }
+            else if(is_string($argument)) {
+                $properties[] = $argument;
+            }
+            else {
+                throw new \InvalidArgumentException('Arguments accepted are only arrays or strings');
+            }
+        }
+
+        foreach($properties as $property) {
             if(!is_string($property)) {
-                throw new \InvalidArgumentException('All arguments must be strings');
+                throw new \InvalidArgumentException('All properties must be strings');
             }
 
             if(!$class::hasProperty($property)) {
-                throw new \InvalidArgumentException('A property does not exist');
+                throw new \InvalidArgumentException('Property ' . strip_tags($property) . ' does not exist');
             }
 
             $this->fields[$index][] = $property;
@@ -126,20 +142,32 @@ abstract class Request {
         return $this;
     }
 
-    public function with($logic, $field, $operator, $value = null, $option = null) {
+    public function with($logic = '', $field = null, $operator = null, $value = null, $option = null, $table = null) {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
         if(sizeof($this->classes) <= 1) {
             throw new \InvalidArgumentException('No class linked yet');
         }
 
-        $index = sizeof($this->classes) - 1;
+        $linkIndex = sizeof($this->classes) - 1;
+
+        if(is_null($table)) {
+            $index = $linkIndex;
+        }
+        else {
+            if(!isset($this->index[$table])) {
+                throw new \Exception('Invalid table specified');
+            }
+
+            $index = $this->index[$table];
+        }
+
         $class = $this->classes[$index];
 
         if(!$class::hasProperty($field)) {
             throw new \Exception('Field does not exist');
         }
 
-        $conditions =& $this->links[$index]['conditions'];
+        $conditions =& $this->links[$linkIndex]['conditions'];
 
         if(sizeof($conditions) === 0) {
             if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
