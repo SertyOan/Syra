@@ -28,18 +28,6 @@ abstract class Request {
     }
 
     private function __construct(string $table, string $customSQL = null) {
-        $class = static::DATABASE_CLASS;
-
-        if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
-            throw new \Exception('Invalid database class');
-        }
-
-        $this->database = $class::getReader();
-
-        if(!($this->database instanceof Database)) {
-            throw new \Exception('Invalid reader database class');
-        }
-
         $this->addTable($table, customSQL: $customSQL);
     }
 
@@ -281,7 +269,7 @@ abstract class Request {
         $query = $this->generateCountSQL($field, $distinct);
         $count = null;
 
-        foreach($this->database->queryRows($query, $this->bindings) as $row) {
+        foreach($this->getDatabase()->queryRows($query, $this->bindings) as $row) {
             $count = (Integer) $row['C'];
         }
 
@@ -310,7 +298,7 @@ abstract class Request {
         $lastIndex = null;
         $query = $this->generateDataSQL();
 
-        foreach($this->database->queryRows($query, $this->bindings) as $line) {
+        foreach($this->getDatabase()->queryRows($query, $this->bindings) as $line) {
             for($i = 0, $c = sizeof($this->classes); $i < $c; $i++) {
                 if(sizeof($this->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
                     continue;
@@ -686,5 +674,23 @@ abstract class Request {
             default:
                 throw new \LogicException('Unhandled property class');
         }
+    }
+
+    private function getDatabase() {
+        if(empty($this->database)) {
+            $class = static::DATABASE_CLASS;
+
+            if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
+                throw new \Exception('Invalid database class');
+            }
+
+            $this->database = $class::getReader();
+
+            if(!($this->database instanceof Database)) {
+                throw new \Exception('Invalid reader database class');
+            }
+        }
+    
+        return $this->database;
     }
 }
