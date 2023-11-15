@@ -581,6 +581,8 @@ abstract class Request {
         $operator =& $condition['operator'];
 
         if(!empty($condition['option'])) {
+            $matches = [];
+
             if(preg_match($condition['option'], '@^JSON_EXTRACT:\$(\.[a-z0-9_])+$@i', $matches)) {
                 $field = 'JSON_EXTRACT(' . 'T'.$condition['table'].'.`'.$condition['field'].'`, ' . $matches[1] . ')';
             }
