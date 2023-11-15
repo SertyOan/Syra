@@ -580,7 +580,15 @@ abstract class Request {
         $table =& $condition['table'];
         $operator =& $condition['operator'];
 
-        $field = 'T'.$condition['table'].'.`'.$condition['field'].'`';
+        if(!empty($condition['option'])) {
+            if(preg_match($condition['option'], '@^JSON_EXTRACT:\$(\.[a-z0-9_])+$@i', $matches)) {
+                $field = 'JSON_EXTRACT(' . 'T'.$condition['table'].'.`'.$condition['field'].'`, ' . $matches[1] . ')';
+            }
+        }
+        else {
+            $field = 'T'.$condition['table'].'.`'.$condition['field'].'`';
+        }
+
         $tableClass = $this->classes[$table];
         $propertyClass = $tableClass::getPropertyClass($condition['field']);
         $link = false;
