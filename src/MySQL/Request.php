@@ -584,7 +584,7 @@ abstract class Request {
         if(!empty($condition['option'])) {
             $matches = [];
 
-            if(preg_match('@^JSON_EXTRACT:(\$(?:\.[a-z0-9_])+)$@i', $condition['option'], $matches)) {
+            if(preg_match('@^JSON_EXTRACT:(\$(?:\.[a-z0-9_]+)+)$@i', $condition['option'], $matches)) {
                 $field = 'JSON_EXTRACT(' . $field . ', \'' . $matches[1] . '\')';
             }
         }
