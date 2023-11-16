@@ -579,16 +579,14 @@ abstract class Request {
     private function generateSQLOperator($condition) {
         $table =& $condition['table'];
         $operator =& $condition['operator'];
+        $field = 'T'.$condition['table'].'.`'.$condition['field'].'`';
 
         if(!empty($condition['option'])) {
             $matches = [];
 
-            if(preg_match($condition['option'], '@^JSON_EXTRACT:\$(\.[a-z0-9_])+$@i', $matches)) {
+            if(preg_match('@^JSON_EXTRACT:(\$(?:\.[a-z0-9_])+)$@i', $condition['option'], $matches)) {
                 $field = 'JSON_EXTRACT(' . $field . ', \'' . $matches[1] . '\')';
             }
-        }
-        else {
-            $field = 'T'.$condition['table'].'.`'.$condition['field'].'`';
         }
 
         $tableClass = $this->classes[$table];
