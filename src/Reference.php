@@ -2,8 +2,8 @@
 namespace Syra;
 
 class Reference {
-    public $table;
-    public $field;
+    public readonly string $table;
+    public readonly string $field;
 
     public static function create(string $table, string $field) {
         $reference = new self();
