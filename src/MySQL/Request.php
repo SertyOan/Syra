@@ -1,9 +1,10 @@
 <?php
 namespace Syra\MySQL;
 
+use Syra\RequestInterface;
 use Syra\Reference;
 
-abstract class Request {
+abstract class Request implements RequestInterface {
     const OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject';
     const LEFT_JOIN = 1;
     const INNER_JOIN = 2;
@@ -584,8 +585,8 @@ abstract class Request {
         if(!empty($condition['option'])) {
             $matches = [];
 
-            if(preg_match('@^JSON_EXTRACT:(\$(?:\.[a-z0-9_]+)+)$@i', $condition['option'], $matches)) {
-                $field = 'JSON_EXTRACT(' . $field . ', \'' . $matches[1] . '\')';
+            if(preg_match('@^JSON_VALUE:(\$(?:\.[a-z0-9_]+)+)$@i', $condition['option'], $matches)) {
+                $field = 'JSON_VALUE(' . $field . ', \'' . $matches[1] . '\')';
             }
         }
 
