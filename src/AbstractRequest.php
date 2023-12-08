@@ -403,7 +403,7 @@ abstract class AbstractRequest {
 
             $this->database = $class::getReader();
 
-            if(!is_a($this->database, static::DATABASE_CLASS)) {
+            if(!is_a($this->database, static::DATABASE_ABSTRACT_CLASS)) {
                 throw new \Exception('Invalid reader database class');
             }
         }

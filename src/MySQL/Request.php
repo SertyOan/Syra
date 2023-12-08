@@ -6,7 +6,7 @@ use Syra\Reference;
 
 abstract class Request extends AbstractRequest {
     const OBJECTS_CLASS = '\\Syra\\MySQL\\ModelObject';
-    const DATABASE_CLASS = '\\Syra\\MySQL\\Database';
+    const DATABASE_ABSTRACT_CLASS = '\\Syra\\MySQL\\Database';
 
     public function generateDataSQL() {
         $orderBy = $this->generateSQLOrderBy();
