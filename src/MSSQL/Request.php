@@ -154,9 +154,7 @@ abstract class Request extends AbstractRequest {
         $orders = Array();
 
         foreach($this->orderBy as $clause) {
-            switch($clause['option']) {
-                $orders[] = 'T'.$clause['table'].'.['.$clause['field'].'] '.$clause['direction'];
-            }
+            $orders[] = 'T'.$clause['table'].'.['.$clause['field'].'] '.$clause['direction'];
         }
 
         $sql .= implode(',', $orders);
