@@ -43,7 +43,7 @@ class Database implements \Syra\DatabaseInterface {
 class Group extends \Syra\MySQL\ModelObject {
     const DATABASE_SCHEMA = 'SyraTest';
     const DATABASE_TABLE = 'Group';
-    const PROPERTIES = [
+    protected static $properties = [
         'id' => Array('class' => 'Integer'),
         'name' => Array('class' => 'String')
     ];
@@ -55,7 +55,7 @@ class Group extends \Syra\MySQL\ModelObject {
 class User extends \Syra\MySQL\ModelObject {
     const DATABASE_SCHEMA = 'SyraTest';
     const DATABASE_TABLE = 'User';
-    const PROPERTIES = [
+    protected static $properties = [
         'id' => Array('class' => 'Integer'),
         'name' => Array('class' => 'String')
     ];
@@ -66,7 +66,7 @@ class User extends \Syra\MySQL\ModelObject {
 class Audit extends \Syra\MySQL\ModelObject {
     const DATABASE_SCHEMA = 'SyraTest';
     const DATABASE_TABLE = 'Audit';
-    const PROPERTIES = [
+    protected static $properties = [
         'id' => Array('class' => 'Integer'),
         'model' => Array('class' => 'String'),
         'modelID' => Array('class' => 'Integer')
