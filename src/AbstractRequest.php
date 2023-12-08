@@ -397,13 +397,13 @@ abstract class AbstractRequest {
         if(empty($this->database)) {
             $class = static::DATABASE_CLASS;
 
-            if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
+            if(is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
                 throw new \Exception('Invalid database class');
             }
 
             $this->database = $class::getReader();
 
-            if(!($this->database instanceof Database)) {
+            if(!is_a($this->database, static::DATABASE_CLASS)) {
                 throw new \Exception('Invalid reader database class');
             }
         }
