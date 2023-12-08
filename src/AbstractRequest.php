@@ -397,7 +397,7 @@ abstract class AbstractRequest {
         if(empty($this->database)) {
             $class = static::DATABASE_CLASS;
 
-            if(is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
+            if(!is_subclass_of($class, '\\Syra\\DatabaseInterface')) {
                 throw new \Exception('Invalid database class');
             }
 
