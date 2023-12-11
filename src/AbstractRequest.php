@@ -43,7 +43,7 @@ abstract class AbstractRequest {
         $class = $this->buildClassFromTable($table);
 
         if(!is_subclass_of($class, static::OBJECTS_CLASS)) {
-            throw new \Exception('Class is not a child of ModelObject');
+            throw new \Exception('Class is not a child of ' . static::OBJECTS_CLASS);
         }
 
         $this->classes[] = $class;
@@ -293,7 +293,7 @@ abstract class AbstractRequest {
 
     public function mapAsArray() {
         $object = $this->mapAsObject();
-        return $object instanceof ModelObject ? $object->asArray() : $object;
+        return $object instanceof (static::OBJECTS_CLASS) ? $object->asArray() : $object;
     }
 
     public function mapAsObjects() {
