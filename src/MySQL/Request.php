@@ -14,8 +14,16 @@ abstract class Request extends AbstractRequest {
         $statement = $this->generateSQLSelect();
         $statement .= $this->generateSQLJoins();
 
-        // TODO no need if no link is 1..n 
-        if($this->lines !== 0 || $this->offset !== 0) {
+        $hasAlias = false;
+
+        foreach($this->links as $link) {
+            if(!empty($link['alias'])) {
+                $hasAlias = true;
+                break;
+            }
+        }
+
+        if($hasAlias && ($this->lines !== 0 || $this->offset !== 0)) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT T0.`id` ';
             $statement .= $this->generateSQLJoins();
