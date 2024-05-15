@@ -17,8 +17,8 @@ abstract class AbstractRequest {
     protected $offset = 0;
     protected $lines = 0;
 
-    public static function get($table) {
-        return new static($table);
+    public static function get(string $table, string $customSQL = null) {
+        return new static($table, customSQL: $customSQL);
     }
 
     public static function objectsAsArrays(Array $objects = Array()) {
