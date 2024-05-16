@@ -34,6 +34,10 @@ abstract class Request extends AbstractRequest {
         }
         else {
             $statement .= $this->generateSQLWhere();
+
+            if($this->lines !== 0 || $this->offset !== 0) {
+                $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
+            }
         }
 
         $statement .= $orderBy;
