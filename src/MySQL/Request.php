@@ -31,16 +31,17 @@ abstract class Request extends AbstractRequest {
             $statement .= "\n".$orderBy;
             $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
             $statement .= ') AS Subset ON (Subset.id = T0.id)';
+            $statement .= $orderBy;
         }
         else {
             $statement .= $this->generateSQLWhere();
+            $statement .= $orderBy;
 
             if($this->lines !== 0 || $this->offset !== 0) {
                 $statement .= "\n".'LIMIT '.$this->offset.','.$this->lines;
             }
         }
 
-        $statement .= $orderBy;
         return $statement;
     }
 
