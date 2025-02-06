@@ -151,7 +151,7 @@ abstract class AbstractRequest {
         $conditions =& $this->links[$linkIndex]['conditions'];
 
         if(sizeof($conditions) === 0) {
-            if(preg_match('/^(\(+)?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
 
@@ -160,7 +160,7 @@ abstract class AbstractRequest {
             $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+)? *(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
     
@@ -185,7 +185,7 @@ abstract class AbstractRequest {
 
     public function where($logic, $table, $field, $operator, $value = null, $option = null) {
         if(sizeof($this->conditions) === 0) {
-            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) === false) { // ignoring AND in case it is the first condition
+            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
                 throw new \Exception('Invalid logic operator for first condition');
             }
 
@@ -194,7 +194,7 @@ abstract class AbstractRequest {
             $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\)+ )?(AND|OR)( \(+)?$/', $logic, $matches) === false) {
+            if(preg_match('/^(\)+) *?(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
     
