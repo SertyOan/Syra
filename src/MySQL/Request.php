@@ -226,6 +226,10 @@ abstract class Request extends AbstractRequest {
                 }
                 else {
                     $this->addBinding($propertyClass, $condition['value']);
+                    if($operator==='&') {
+                        // binary & operator need two binding
+                        $this->addBinding($propertyClass, $condition['value']);
+                    }
                 }
             }
         }
@@ -236,6 +240,8 @@ abstract class Request extends AbstractRequest {
                 $clause = $field.' '.$operator;
                 break;
             case '&':
+                $clause = $field.$operator.($link === false ? '?' : $link).'='.($link === false ? '?' : $link);
+                break;
             case '|':
                 $clause = $field.$operator.($link === false ? '?' : $link).'!=0';
                 break;
