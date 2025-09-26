@@ -14,7 +14,16 @@ abstract class Request extends AbstractRequest {
         $statement = $this->generateSQLSelect();
         $statement .= $this->generateSQLJoins();
 
-        if($this->lines !== 0 || $this->offset !== 0) {
+        $hasAlias = false;
+
+        foreach($this->links as $link) {
+            if(!empty($link['alias'])) {
+                $hasAlias = true;
+                break;
+            }
+        }
+
+        if($hasAlias && ($this->lines !== 0 || $this->offset !== 0)) {
             $statement .= "\n".'INNER JOIN (';
             $statement .= "\n".'SELECT DISTINCT ';
             $fields = ['T0.[id]'];
@@ -26,15 +35,20 @@ abstract class Request extends AbstractRequest {
             $statement .= implode(',', $fields);
             $statement .= $this->generateSQLJoins();
             $statement .= $this->generateSQLWhere();
-            $statement .= $orderBy;
+            $statement .= "\n".$orderBy;
             $statement .= "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
             $statement .= ') AS Subset ON (Subset.id = T0.id)';
+            $statement .= $orderBy;
         }
         else {
             $statement .= $this->generateSQLWhere();
+            $statement .= $orderBy;
+
+            if($this->lines !== 0 || $this->offset !== 0) {
+                $statement .= "\n".'OFFSET '.$this->offset.' ROWS FETCH NEXT '.$this->lines.' ROWS ONLY';
+            }
         }
 
-        $statement .= $orderBy;
         return $statement;
     }
 
@@ -48,6 +62,7 @@ abstract class Request extends AbstractRequest {
         $statement .= 'T0.['.$field.']) AS C';
         $statement .= $this->generateSQLJoins();
         $statement .= $this->generateSQLWhere();
+
         return $statement;
     }
 
