@@ -82,6 +82,14 @@ $request = Request::get('Audit')->withFields('id')
 
 print_r($request->generateDataSQL());
 
+$request = Request::get('Audit')->withFields('id')
+    ->leftJoin('Group', 'Groups')->on('Group', 'id', 'modelID')->with(table: 'Audit', field: 'model', operator: '=', value: 'Group')->withFields('id', 'name')
+    ->leftJoin('User', 'Users')->on('User', 'id', 'modelID')->with(table: 'Audit', field: 'model', operator: '=', value: 'User')->withFields(...['id', 'name'])
+    ->where('(', 'Audit', 'id', 'IS NOT NULL', closing: ')');
+
+print_r($request->generateDataSQL());
+
+
 $duration = microtime(true) - STARTED_AT;
 print("\n".'Duration: '.$duration);
 print("\n".'Memory: '.memory_get_peak_usage());
