@@ -123,7 +123,7 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function with($logic = '', $field = null, $operator = null, $value = null, $option = null, $table = null) {
+    public function with($logic = '', $field = null, $operator = null, $value = null, $option = null, $table = null, $closing = null) {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
         if(sizeof($this->classes) <= 1) {
             throw new \InvalidArgumentException('No class linked yet');
@@ -169,6 +169,10 @@ abstract class AbstractRequest {
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         }
 
+        if(!empty($closing) && preg_match('@^\)+$@', $closing) !== 1) {
+            throw new \Exception('Invalid closing parameter value');
+        }
+
         $conditions[] = Array(
             'logic' => $logic,
             'table' => $index,
@@ -177,13 +181,14 @@ abstract class AbstractRequest {
             'value' => $value,
             'option' => $option,
             'open' => $open,
-            'close' => $close
+            'close' => $close,
+            'closing' => $closing
         );
 
         return $this;
     }
 
-    public function where($logic, $table, $field, $operator, $value = null, $option = null) {
+    public function where($logic, $table, $field, $operator, $value = null, $option = null, $closing = null) {
         if(sizeof($this->conditions) === 0) {
             if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
                 throw new \Exception('Invalid logic operator for first condition');
@@ -214,6 +219,10 @@ abstract class AbstractRequest {
             throw new \Exception('Property specified does not exist in '.$table);
         }
 
+        if(!empty($closing) && preg_match('@^\)+$@', $closing) !== 1) {
+            throw new \Exception('Invalid closing parameter value');
+        }
+
         $this->conditions[] = Array(
             'logic' => $logic,
             'table' => $index,
@@ -222,7 +231,8 @@ abstract class AbstractRequest {
             'value' => $value,
             'option' => $option,
             'close' => $close,
-            'open' => $open
+            'open' => $open,
+            'closing' => $closing
         );
 
         return $this;

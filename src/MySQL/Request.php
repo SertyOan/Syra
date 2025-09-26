@@ -158,6 +158,11 @@ abstract class Request extends AbstractRequest {
             }
 
             $sql .= $this->generateSQLOperator($condition);
+
+            if(!empty($condition['closing'])) {
+                $sql .= $condition['closing'];
+                $opened -= strlen($condition['closing']);
+            }
         }
 
         $sql .= str_repeat(')', $opened);
