@@ -214,14 +214,28 @@ abstract class Request extends AbstractRequest {
                 $clause = $field.' '.$operator;
                 break;
             case '&':
+                if ($link === false) {
+                    $this->addBinding($propertyClass, $condition['value']);
+                    $clause = $field.'&?=?';
+                }
+                else {
+                    $clause = $field.'&'.$link.'='.$link;
+                }
+                break;
             case '|':
-                $clause = $field.$operator.($link === false ? '?' : $link).'!=0';
+                $clause = $field.'|'.($link === false ? '?' : $link).'!=0';
                 break;
             case '!&':
                 $clause = $field.'&'.($link === false ? '?' : $link).'=0';
                 break;
             case '!|':
-                $clause = $field.'|'.($link === false ? '?' : $link).'=0';
+                if ($link === false) {
+                    $this->addBinding($propertyClass, $condition['value']);
+                    $clause = $field.'|?=?';
+                }
+                else {
+                    $clause = $field .'|'.$link.'='.$link;
+                }
                 break;
             case '>':
             case '<':
@@ -281,6 +295,13 @@ abstract class Request extends AbstractRequest {
                 $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
                 break;
             case 'Integer':
+                if (is_string($value) && preg_match('/%/', $value)) {
+                    $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
+                }
+                else {
+                    $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                }
+                break;
             case 'Timestamp':
                 $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
                 break;
