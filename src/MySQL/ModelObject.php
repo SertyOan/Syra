@@ -42,6 +42,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer': $this->$property = (Integer) $value; break;
+                    case 'Boolean': $this->$property = (Boolean) $value; break;
                     case 'Float': $this->$property = (Float) $value; break;
                     case 'String': $this->$property = (String) $value; break;
                     case 'JSON': $this->$property = is_string($value) ? json_decode($value) : $value; break;
@@ -103,6 +104,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer':
+                    case 'Boolean':
                     case 'Float':
                     case 'String':
                     case 'DateTime':
@@ -159,6 +161,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer': $array[$property] = (Integer) $this->$property; break;
+                    case 'Boolean': $array[$property] = (Boolean) $this->$property; break;
                     case 'Float': $array[$property] = (Float) $this->$property; break;
                     case 'String': $array[$property] = (String) $this->$property; break;
                     case 'DateTime': $array[$property] = $this->$property->format('Y-m-d H:i:s'); break;
@@ -234,6 +237,10 @@ abstract class ModelObject {
                     case 'Integer':
                         $fields[] = '`'.$property.'`';
                         $params[] = ['value' => (Integer) $this->$property, 'type' => \PDO::PARAM_INT];
+                        break;
+                    case 'Boolean':
+                        $fields[] = '`'.$property.'`';
+                        $params[] = ['value' => (Boolean) $this->$property, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'Float':
                         $fields[] = '`'.$property.'`';
