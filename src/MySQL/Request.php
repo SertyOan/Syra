@@ -325,7 +325,7 @@ abstract class Request extends AbstractRequest {
                 $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
                 break;
             case 'Boolean':
-                $this->bindings[] = ['value' => (bool) $value, 'type' => \PDO::PARAM_INT];
+                $this->bindings[] = ['value' => (Boolean) $value, 'type' => \PDO::PARAM_INT];
                 break;
             case 'Integer':
                 if (is_string($value) && preg_match('/%/', $value)) {
