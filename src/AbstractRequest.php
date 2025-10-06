@@ -17,7 +17,7 @@ abstract class AbstractRequest {
     protected $offset = 0;
     protected $lines = 0;
 
-    public static function get(string $table, string $customSQL = null) {
+    public static function get(string $table, ?string $customSQL = null) {
         return new static($table, customSQL: $customSQL);
     }
 
@@ -35,7 +35,7 @@ abstract class AbstractRequest {
         return $arrays;
     }
 
-    private function __construct(string $table, string $customSQL = null) {
+    private function __construct(string $table, ?string $customSQL = null) {
         $this->addTable($table, customSQL: $customSQL);
     }
 
@@ -59,7 +59,7 @@ abstract class AbstractRequest {
         while(isset($this->index[$table.'::'.$i])) {
             $i++;
         }
-            
+
         $this->index[$table.'::'.$i] = $index;
         $this->fields[$index] = Array();
 
@@ -163,7 +163,7 @@ abstract class AbstractRequest {
             if(preg_match('/^(\)+)? *(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
-    
+
             $logic = $matches[2];
             $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
@@ -202,7 +202,7 @@ abstract class AbstractRequest {
             if(preg_match('/^(\)+) *?(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
-    
+
             $logic = $matches[2];
             $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
@@ -417,7 +417,7 @@ abstract class AbstractRequest {
                 throw new \Exception('Invalid reader database class');
             }
         }
-    
+
         return $this->database;
     }
 }
