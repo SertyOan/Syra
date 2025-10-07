@@ -17,7 +17,7 @@ abstract class AbstractRequest {
     protected $offset = 0;
     protected $lines = 0;
 
-    public static function get(string $table, string $customSQL = null) {
+    public static function get(string $table, ?string $customSQL = null) : AbstractRequest {
         return new static($table, customSQL: $customSQL);
     }
 
@@ -35,11 +35,11 @@ abstract class AbstractRequest {
         return $arrays;
     }
 
-    private function __construct(string $table, string $customSQL = null) {
+    private function __construct(string $table, ?string $customSQL = null) {
         $this->addTable($table, customSQL: $customSQL);
     }
 
-    private function addTable($table, $customSQL = null) {
+    private function addTable(string $table, $customSQL = null) {
         $class = $this->buildClassFromTable($table);
 
         if(!is_subclass_of($class, static::OBJECTS_CLASS)) {
@@ -59,7 +59,7 @@ abstract class AbstractRequest {
         while(isset($this->index[$table.'::'.$i])) {
             $i++;
         }
-            
+
         $this->index[$table.'::'.$i] = $index;
         $this->fields[$index] = Array();
 
@@ -68,7 +68,7 @@ abstract class AbstractRequest {
         }
     }
 
-    public function withFields() {
+    public function withFields() : AbstractRequest {
         $index = sizeof($this->classes) - 1;
         $class = end($this->classes);
 
@@ -89,15 +89,15 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function leftJoin($table, $alias = null, $customSQL = null) {
+    public function leftJoin(string $table, ?string $alias = null, ?string $customSQL = null) : AbstractRequest {
         return $this->link($table, alias: $alias, customSQL: $customSQL);
     }
 
-    public function innerJoin($table, $alias = null, $customSQL = null) {
+    public function innerJoin(string $table, ?string $alias = null, ?string $customSQL = null) : AbstractRequest {
         return $this->link($table, alias: $alias, strictly: true, customSQL: $customSQL);
     }
 
-    protected function link($table, $alias = null, $strictly = false, $customSQL = null) {
+    protected function link(string $table, ?string $alias = null, bool $strictly = false, ?string $customSQL = null) : AbstractRequest {
         $this->addTable($table, customSQL: $customSQL);
         $index = sizeof($this->classes) - 1;
 
@@ -110,7 +110,7 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function on($leftTable, $leftTableField, $rightTableField = 'id') {
+    public function on(string $leftTable, string $leftTableField, string $rightTableField = 'id') : AbstractRequest {
         if(!isset($this->index[$leftTable])) {
             throw new \InvalidArgumentException('Invalid table referenced');
         }
@@ -123,7 +123,7 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function with($logic = '', $field = null, $operator = null, $value = null, $option = null, $table = null, $closing = null) {
+    public function with(string $logic = '', ?string $field = null, ?string $operator = null, $value = null, $option = null, $table = null, $closing = null) : AbstractRequest {
         // TODO if $logic does not match a logic, admit it to be the first condition and call same method with '' as first argument preceeding
         if(sizeof($this->classes) <= 1) {
             throw new \InvalidArgumentException('No class linked yet');
@@ -163,7 +163,7 @@ abstract class AbstractRequest {
             if(preg_match('/^(\)+)? *(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
-    
+
             $logic = $matches[2];
             $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
@@ -188,7 +188,7 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function where($logic, $table, $field, $operator, $value = null, $option = null, $closing = null) {
+    public function where($logic, $table, $field, $operator, $value = null, $option = null, $closing = null) : AbstractRequest {
         if(sizeof($this->conditions) === 0) {
             if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
                 throw new \Exception('Invalid logic operator for first condition');
@@ -202,7 +202,7 @@ abstract class AbstractRequest {
             if(preg_match('/^(\)+) *?(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
-    
+
             $logic = $matches[2];
             $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
             $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
@@ -238,15 +238,15 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function orderAscBy($table, $field, $option = null) {
+    public function orderAscBy(string $table, string $field, $option = null) : AbstractRequest {
         return $this->orderBy($table, $field, $option, 'ASC');
     }
 
-    public function orderDescBy($table, $field, $option = null) {
+    public function orderDescBy(string $table, string $field, $option = null) : AbstractRequest {
         return $this->orderBy($table, $field, $option, 'DESC');
     }
 
-    private function orderBy($table, $field, $option = null, $direction = 'ASC') {
+    private function orderBy(string $table, string $field, $option = null, $direction = 'ASC') : AbstractRequest {
         if(!isset($this->index[$table])) {
             throw new \Exception('Table ' . $table. ' is not included in request');
         }
@@ -267,19 +267,19 @@ abstract class AbstractRequest {
         return $this;
     }
 
-    public function offset($i) {
+    public function offset($i) : AbstractRequest {
         $this->offset = max(0, $i);
         return $this;
     }
 
-    public function lines($i) { // number of SQL rows to output, not number of objects of first table
+    public function lines($i) : AbstractRequest { // number of SQL rows to output, not number of objects of first table
         $this->lines = max(1, $i);
         return $this;
     }
 
     // NOTE mapping methods
 
-    public function count($field = 'id', $distinct = false) {
+    public function count($field = 'id', $distinct = false) : ?int {
         $this->bindings = [];
         $query = $this->generateCountSQL($field, $distinct);
         $count = null;
@@ -292,21 +292,21 @@ abstract class AbstractRequest {
         return $count;
     }
 
-    public function mapAsObject() {
+    public function mapAsObject() : mixed {
         $records = $this->mapAsObjects();
         return end($records);
     }
 
-    public function mapAsArrays() {
+    public function mapAsArrays() : Array {
         return self::objectsAsArrays($this->mapAsObjects());
     }
 
-    public function mapAsArray() {
+    public function mapAsArray() : mixed {
         $object = $this->mapAsObject();
         return $object instanceof (static::OBJECTS_CLASS) ? $object->asArray() : $object;
     }
 
-    public function mapAsObjects() {
+    public function mapAsObjects() : Array {
         $this->bindings = [];
         $objects = Array();
         $pathes = Array();
@@ -417,7 +417,7 @@ abstract class AbstractRequest {
                 throw new \Exception('Invalid reader database class');
             }
         }
-    
+
         return $this->database;
     }
 }
