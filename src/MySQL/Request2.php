@@ -51,7 +51,7 @@ abstract class Request extends AbstractRequest {
         if($distinct) {
             $statement .= 'DISTINCT ';
         }
-
+        
         $statement .= 'T0.`'.$field.'`) AS C';
         $statement .= $this->generateSQLJoins();
         $statement .= $this->generateSQLWhere();
@@ -158,11 +158,6 @@ abstract class Request extends AbstractRequest {
             }
 
             $sql .= $this->generateSQLOperator($condition);
-
-            if(!empty($condition['closing'])) {
-                $sql .= $condition['closing'];
-                $opened -= strlen($condition['closing']);
-            }
         }
 
         $sql .= str_repeat(')', $opened);
@@ -186,8 +181,11 @@ abstract class Request extends AbstractRequest {
                 case null:
                     $orders[] = $field . ' ' . $clause['direction'];
                     break;
-                case preg_match('@^JSON_VALUE:(\$(?:\.[a-z0-9_]+)+)$@i', $clause['option']) === 1:
-                    $orders[] = 'JSON_VALUE(' . $field . ', \'' . $matches[1] . '\')';
+                case preg_match('@^JSON_VALUE:(\$(?:\.[a-z0-9_]+)+)$@i', $clause['option'], $matches) === 1:
+                    $orders[] = 'JSON_VALUE(' . $field . ', \'' . $matches[1] . '\') ' . $clause['direction'];
+                    break;
+                case preg_match('@^SQL:(.*)@i', $clause['option'], $matches) === 1:
+                    $orders[] = '(' . str_replace($clause['field'], $field, $matches[1]) . ') ' . $clause['direction'];
                     break;
             }
         }
@@ -226,7 +224,9 @@ abstract class Request extends AbstractRequest {
             else {
                 if(is_array($condition['value'])) {
                     foreach($condition['value'] as $key => $value) {
-                        $this->addBinding($propertyClass, $condition['value'][$key]);
+						if(!is_null($condition['value'][$key])) {
+							$this->addBinding($propertyClass, $condition['value'][$key]);
+						}
                     }
                 }
                 else {
@@ -241,21 +241,26 @@ abstract class Request extends AbstractRequest {
                 $clause = $field.' '.$operator;
                 break;
             case '&':
-            case '& ONE':
-                $clause = $field.'&'.($link === false ? '?' : $link).'!=0';
-                break;
-            case '& ALL':
-                if ($link === false) {
-                    $this->addBinding($propertyClass, $condition['value']);
-                    $clause = $field.'&?=?';
-                }
-                else {
-                    $clause = $field.'&'.$link.'='.$link;
-                }
+            case '|':
+                $clause = $field.$operator.($link === false ? '?' : $link).'!=0';
                 break;
             case '!&':
                 $clause = $field.'&'.($link === false ? '?' : $link).'=0';
                 break;
+            case '!|':
+                $clause = $field.'|'.($link === false ? '?' : $link).'=0';
+                break;
+			// mouais bon ca tu ne voulais pas
+            case '=':
+                if(is_null($condition['value'])) {
+                    $clause = $field.' IS NULL';
+                    break;
+                }
+            case '!=':
+                if(is_null($condition['value'])) {
+                    $clause = $field.' IS NOT NULL';
+                    break;
+                }
             case '>':
             case '<':
             case '>=':
@@ -274,14 +279,27 @@ abstract class Request extends AbstractRequest {
                     throw new \InvalidArgumentException('Invalid values for operator '.$operator);
                 }
 
+				// dans la même logique... je trouve ca bien car c'est logique et chiant à gérer dans l'appli
+				// mais ca change la logique SQL, donc mouais :/
+                if(in_array(null,$condition['value'])) {
+                    $condition['value'] = array_filter($condition['value'], fn($value) => !is_null($value));
+                    if($operator === 'IN') {
+                        $clause = '('.$field.' IS NULL OR ';
+                    } else {
+                        $clause = '('.$field.' IS NOT NULL AND ';
+                    }
+                } else {
+                    $clause = '(';
+                }
                 $c = sizeof($condition['value']);
 
                 if($c !== 0) {
-                    $clause = $field.' '.$operator.' ('.str_repeat('?,', $c - 1).'?)';
+                    $clause .= $field.' '.$operator.' ('.str_repeat('?,', $c - 1).'?)';
                 }
                 else {
-                    $clause = $field.' '.$operator.' (-1)';
+                    $clause .= $field.' '.$operator.' (-1)';
                 }
+				$clause .= ')';
                 break;
             case 'SQL':
                 $clause = $field.' '.$condition['option'];
@@ -297,7 +315,7 @@ abstract class Request extends AbstractRequest {
         if(is_subclass_of($propertyClass, self::OBJECTS_CLASS)) {
             $propertyClass = $propertyClass::getPropertyClass('id');
             $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-        }
+        } 
         else if(enum_exists($propertyClass)) {
             if($value instanceof $propertyClass) {
                 $value = $value->value;
@@ -305,6 +323,13 @@ abstract class Request extends AbstractRequest {
 
             $propertyClass = gettype($value);
             $propertyClass = ucfirst($propertyClass);
+        } elseif($value === null) {
+			// j'ai plus ce sujet en tête mais il me semble que j'ai eu des cas où en demandant une valeur null je trouvais des enregistrements avec 0 ou ''
+			// depuis j'ai du corriger l'appli en vérifiant que la valeur de test est != de null
+			// comprendre le pb peut être long et est évitable
+			// mais c'est pareil, ca change la logique sql qui a un operateur dédié :/
+            // this avoid null value to be casted to empty string or zero
+            $propertyClass = 'NULL';
         }
 
         switch($propertyClass) {
@@ -316,19 +341,12 @@ abstract class Request extends AbstractRequest {
             case 'Float':
                 $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
                 break;
-            case 'Boolean':
-                $this->bindings[] = ['value' => (Boolean) $value, 'type' => \PDO::PARAM_INT];
-                break;
             case 'Integer':
-                if (is_string($value) && preg_match('/%/', $value)) {
-                    $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
-                }
-                else {
-                    $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
-                }
-                break;
             case 'Timestamp':
                 $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                break;
+            case 'NULL':
+                $this->bindings[] = ['value' => NULL, 'type' => \PDO::PARAM_NULL];
                 break;
             default:
                 throw new \LogicException('Unhandled property class');
