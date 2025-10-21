@@ -199,7 +199,7 @@ abstract class AbstractRequest {
             $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
         else {
-            if(preg_match('/^(\)+) *?(AND|OR) *(\(+)?$/', $logic, $matches) !== 1) {
+            if(preg_match('/^(\)+)?\s*(AND|OR)\s*(\(+)?$/', $logic, $matches) !== 1) {
                 throw new \Exception('Invalid logic operator');
             }
 
