@@ -1,12 +1,10 @@
 <?php
-namespace Test;
-define('STARTED_AT', microtime(true));
 
-chdir(dirname(__FILE__));
-include('../src/DatabaseInterface.php');
-include('../src/MySQL/Database.php');
-include('../src/MySQL/Object.php');
-include('../src/MySQL/Request.php');
+namespace Test;
+
+require(__DIR__ . '/../vendor/autoload.php');
+
+define('STARTED_AT', microtime(true));
 
 class Request extends \Syra\MySQL\Request {
     const
@@ -40,7 +38,7 @@ class Database implements \Syra\DatabaseInterface {
     }
 }
 
-class Group extends \Syra\MySQL\Object {
+class Group extends \Syra\MySQL\ModelObject {
     const
         DATABASE_SCHEMA = 'SyraTest',
         DATABASE_TABLE = 'Group';
@@ -56,7 +54,7 @@ class Group extends \Syra\MySQL\Object {
         $name;
 }
 
-class User extends \Syra\MySQL\Object {
+class User extends \Syra\MySQL\ModelObject {
     const
         DATABASE_SCHEMA = 'SyraTest',
         DATABASE_TABLE = 'User';
@@ -72,7 +70,7 @@ class User extends \Syra\MySQL\Object {
         $name;
 }
 
-class Access extends \Syra\MySQL\Object {
+class Access extends \Syra\MySQL\ModelObject {
     const
         DATABASE_SCHEMA = 'SyraTest',
         DATABASE_TABLE = 'Access';
