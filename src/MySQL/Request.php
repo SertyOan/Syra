@@ -67,7 +67,7 @@ abstract class Request extends AbstractRequest {
             }
         }
 
-        $sql = 'SELECT DISTINCT ';
+        $sql = 'SELECT ';
         $sql .= implode(',', $selectedFields);
         return $sql;
     }
