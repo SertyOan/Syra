@@ -151,7 +151,7 @@ abstract class AbstractRequest {
         $conditions =& $this->links[$linkIndex]['conditions'];
 
         if(sizeof($conditions) === 0) {
-            if(preg_match('/^(\(+)?$/', $logic, $matches) !== 1) {
+            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
                 throw new \Exception('Invalid logic operator');
             }
 
