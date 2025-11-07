@@ -186,9 +186,14 @@ abstract class Request extends AbstractRequest {
                 case null:
                     $orders[] = $field . ' ' . $clause['direction'];
                     break;
-                case preg_match('@^JSON_VALUE:(\$(?:\.[a-z0-9_]+)+)$@i', $clause['option']) === 1:
-                    $orders[] = 'JSON_VALUE(' . $field . ', \'' . $matches[1] . '\')';
+                case 'LENGTH':
+                    $orders[] = 'LENGTH(' . $field . ') ' . $clause['direction'];
                     break;
+                case preg_match('@^JSON_VALUE:(\$(?:\.[a-z0-9_]+)+)$@i', $clause['option']) === 1:
+                    $orders[] = 'JSON_VALUE(' . $field . ', \'' . $matches[1] . '\') ' . $clause['direction'];
+                    break;
+                default:
+                    throw new \Exception('Unhandled option for order by clause');
             }
         }
 
