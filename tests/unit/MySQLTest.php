@@ -50,4 +50,18 @@ ORDER BY T0.`id` ASC';
 
         $this->assertSame($expected, $request->generateDataSQL());
     }
+
+    public function testJoinFirstWithLogic(): void
+    {
+        $expected = 'SELECT T0.`id` AS T0_id
+FROM `SyraTest`.`Audit` T0
+LEFT JOIN `SyraTest`.`Group` T1 ON (T1.`id`=T1.`modelID` AND (T1.`name` IS NOT NULL))
+ORDER BY T0.`id` ASC';
+
+        $request = Request::get('Audit')->withFields('id')
+            ->leftJoin('Group')->on('Group', 'id', 'modelID')->with('AND', 'name', 'IS NOT NULL');
+
+        $this->assertSame($expected, $request->generateDataSQL());
+    }
+
 }
