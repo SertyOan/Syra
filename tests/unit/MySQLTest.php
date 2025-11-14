@@ -64,4 +64,17 @@ ORDER BY T0.`id` ASC';
         $this->assertSame($expected, $request->generateDataSQL());
     }
 
+    public function testWhereInWithEmptyArray(): void
+    {
+        $expected = 'SELECT T0.`id` AS T0_id
+FROM `SyraTest`.`Audit` T0
+WHERE 1 != 1
+ORDER BY T0.`id` ASC';
+
+        $request = Request::get('Audit')
+            ->withFields('id')
+            ->where('', 'Audit', 'id', 'IN', []);
+
+        $this->assertSame($expected, $request->generateDataSQL());
+    }
 }

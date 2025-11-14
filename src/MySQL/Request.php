@@ -285,7 +285,7 @@ abstract class Request extends AbstractRequest {
                     $clause = $field.' '.$operator.' ('.str_repeat('?,', $c - 1).'?)';
                 }
                 else {
-                    $clause = $operator === 'IN' ? '1 = 1' : '1 != 0';
+                    $clause = $operator === 'IN' ? '1 != 1' : '1 = 1';
                 }
                 break;
             case 'SQL':
