@@ -148,25 +148,21 @@ abstract class AbstractRequest {
             throw new \Exception('Field does not exist');
         }
 
+        if(preg_match('/^(\)+)?\s*(AND|OR)?\s*(\(+)?$/', $logic, $matches) !== 1) {
+            throw new \Exception('Invalid logic operator');
+        }
+
+        $logic = $matches[2] ?? null;
+        $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+        $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
         $conditions =& $this->links[$linkIndex]['conditions'];
 
         if(sizeof($conditions) === 0) {
-            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
-                throw new \Exception('Invalid logic operator');
-            }
-
             $logic = null;
             $close = 0;
-            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
-        else {
-            if(preg_match('/^(\)+)?\s*(AND|OR)\s*(\(+)?$/', $logic, $matches) !== 1) {
-                throw new \Exception('Invalid logic operator');
-            }
-
-            $logic = $matches[2];
-            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
-            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
+        else if(empty($logic)) {
+            throw new \Exception('Invalid logic specified');
         }
 
         if(!empty($closing) && preg_match('@^\)+$@', $closing) !== 1) {
@@ -189,23 +185,20 @@ abstract class AbstractRequest {
     }
 
     public function where($logic, $table, $field, $operator, $value = null, $option = null, $closing = null) : AbstractRequest {
-        if(sizeof($this->conditions) === 0) {
-            if(preg_match('/^(\(+)?(AND)?$/', $logic, $matches) !== 1) { // ignoring AND in case it is the first condition
-                throw new \Exception('Invalid logic operator for first condition');
-            }
+        if(preg_match('/^(\)+)?\s*(AND|OR)?\s*(\(+)?$/', $logic, $matches) !== 1) {
+            throw new \Exception('Invalid logic operator');
+        }
 
+        $logic = $matches[2] ?? null;
+        $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
+        $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
+
+        if(sizeof($this->conditions) === 0) {
             $logic = null;
             $close = 0;
-            $open = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
         }
-        else {
-            if(preg_match('/^(\)+)?\s*(AND|OR)\s*(\(+)?$/', $logic, $matches) !== 1) {
-                throw new \Exception('Invalid logic operator');
-            }
-
-            $logic = $matches[2];
-            $close = empty($matches[1]) ? 0 : strlen(trim($matches[1]));
-            $open = empty($matches[3]) ? 0 : strlen(trim($matches[3]));
+        else if(empty($logic)) {
+            throw new \Exception('Invalid logic specified');
         }
 
         if(!isset($this->index[$table])) {
