@@ -289,21 +289,21 @@ abstract class Request extends AbstractRequest {
             case 'String':
             case 'JSON':
             case 'DateTime':
-                $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
+                $this->bindings[] = ['value' => (string) $value, 'type' => \PDO::PARAM_STR];
                 break;
             case 'Float':
-                $this->bindings[] = ['value' => (Float) $value, 'type' => \PDO::PARAM_STR];
+                $this->bindings[] = ['value' => (float) $value, 'type' => \PDO::PARAM_STR];
                 break;
             case 'Integer':
                 if (is_string($value) && preg_match('/%/', $value)) {
-                    $this->bindings[] = ['value' => (String) $value, 'type' => \PDO::PARAM_STR];
+                    $this->bindings[] = ['value' => (string) $value, 'type' => \PDO::PARAM_STR];
                 }
                 else {
-                    $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                    $this->bindings[] = ['value' => (int) $value, 'type' => \PDO::PARAM_INT];
                 }
                 break;
             case 'Timestamp':
-                $this->bindings[] = ['value' => (Integer) $value, 'type' => \PDO::PARAM_INT];
+                $this->bindings[] = ['value' => (int) $value, 'type' => \PDO::PARAM_INT];
                 break;
             default:
                 throw new \LogicException('Unhandled property class');

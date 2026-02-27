@@ -42,12 +42,12 @@ abstract class ModelObject {
                 $class = static::$properties[$property]['class'];
 
                 switch($class) {
-                    case 'Integer': $this->$property = (Integer) $value; break;
-                    case 'Float': $this->$property = (Float) $value; break;
-                    case 'String': $this->$property = (String) $value; break;
+                    case 'Integer': $this->$property = (int) $value; break;
+                    case 'Float': $this->$property = (float) $value; break;
+                    case 'String': $this->$property = (string) $value; break;
                     case 'JSON': $this->$property = is_string($value) ? json_decode($value) : $value; break;
-                    case 'DateTime': $this->$property = $value instanceof \DateTime ? $value : new \DateTime((String) $value); break;
-                    case 'Timestamp': $this->$property = $value instanceof \DateTime ? $value : new \DateTime('@'.((Integer) $value)); break;
+                    case 'DateTime': $this->$property = $value instanceof \DateTime ? $value : new \DateTime((string) $value); break;
+                    case 'Timestamp': $this->$property = $value instanceof \DateTime ? $value : new \DateTime('@'.((int) $value)); break;
                     default:
                         if(enum_exists($class)) {
                             if($value instanceof $class) {
@@ -134,7 +134,7 @@ abstract class ModelObject {
     }
 
     final public function setSaved($bool = true) { // TODO review naming
-        $this->__inDatabase = (Boolean) $bool;
+        $this->__inDatabase = (bool) $bool;
     }
 
     final public function map($data, $prefix) {
@@ -155,11 +155,11 @@ abstract class ModelObject {
                 $class = $description['class'];
 
                 switch($class) {
-                    case 'Integer': $array[$property] = (Integer) $this->$property; break;
-                    case 'Float': $array[$property] = (Float) $this->$property; break;
-                    case 'String': $array[$property] = (String) $this->$property; break;
+                    case 'Integer': $array[$property] = (int) $this->$property; break;
+                    case 'Float': $array[$property] = (float) $this->$property; break;
+                    case 'String': $array[$property] = (string) $this->$property; break;
                     case 'DateTime': $array[$property] = $this->$property->format('Y-m-d H:i:s'); break;
-                    case 'Timestamp': $array[$property] = (Integer) $this->$property->format('U'); break;
+                    case 'Timestamp': $array[$property] = (int) $this->$property->format('U'); break;
                     case 'JSON': $array[$property] = $this->$property; break;
                     default:
                         if(($this->$property instanceof ModelObject) && !is_null($this->$property->id)) {
@@ -193,10 +193,10 @@ abstract class ModelObject {
 
             switch(static::$properties['id']['class']) {
                 case 'Integer':
-                    $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
+                    $params[] = ['value' => (int) $this->id, 'type' => \PDO::PARAM_INT];
                     break;
                 case 'String':
-                    $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
+                    $params[] = ['value' => (string) $this->id, 'type' => \PDO::PARAM_STR];
                     break;
                 default:
                     throw new \Exception('Invalid class for id field');
@@ -230,15 +230,15 @@ abstract class ModelObject {
                 switch($class) {
                     case 'Integer':
                         $fields[] = '['.$property.']';
-                        $params[] = ['value' => (Integer) $this->$property, 'type' => \PDO::PARAM_INT];
+                        $params[] = ['value' => (int) $this->$property, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'Float':
                         $fields[] = '['.$property.']';
-                        $params[] = ['value' => (Float) $this->$property, 'type' => \PDO::PARAM_STR];
+                        $params[] = ['value' => (float) $this->$property, 'type' => \PDO::PARAM_STR];
                         break;
                     case 'String':
                         $fields[] = '['.$property.']';
-                        $value = (String) $this->$property;
+                        $value = (string) $this->$property;
 
                         if(isset($description['maxLength'])) {
                             $value = substr($value, 0, $description['maxLength']);
@@ -258,7 +258,7 @@ abstract class ModelObject {
                         break;
                     case 'Timestamp':
                         $fields[] = '['.$property.']';
-                        $params[] = ['value' => (Integer) $this->$property->format('U'), 'type' => \PDO::PARAM_INT];
+                        $params[] = ['value' => (int) $this->$property->format('U'), 'type' => \PDO::PARAM_INT];
                         break;
                     case 'JSON':
                         $fields[] = '['.$property.']';
@@ -270,10 +270,10 @@ abstract class ModelObject {
 
                             switch(gettype($this->$property->value)) {
                                 case 'integer':
-                                    $params[] = ['value' => (Integer) $this->$property->value, 'type' => \PDO::PARAM_INT];
+                                    $params[] = ['value' => (int) $this->$property->value, 'type' => \PDO::PARAM_INT];
                                     break;
                                 case 'string':
-                                    $params[] = ['value' => (String) $this->$property->value, 'type' => \PDO::PARAM_STR];
+                                    $params[] = ['value' => (string) $this->$property->value, 'type' => \PDO::PARAM_STR];
                                     break;
                                 default:
                                     throw new \Exception('ORM Error: invalid type for enum field');
@@ -308,10 +308,10 @@ abstract class ModelObject {
 
             switch(static::$properties['id']['class']) {
                 case 'Integer':
-                    $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
+                    $params[] = ['value' => (int) $this->id, 'type' => \PDO::PARAM_INT];
                     break;
                 case 'String':
-                    $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
+                    $params[] = ['value' => (string) $this->id, 'type' => \PDO::PARAM_STR];
                     break;
                 default:
                     throw new \Exception('Invalid class for id field');
@@ -323,10 +323,10 @@ abstract class ModelObject {
 
                 switch(static::$properties['id']['class']) {
                     case 'Integer':
-                        $params[] = ['value' => (Integer) $this->id, 'type' => \PDO::PARAM_INT];
+                        $params[] = ['value' => (int) $this->id, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'String':
-                        $params[] = ['value' => (String) $this->id, 'type' => \PDO::PARAM_STR];
+                        $params[] = ['value' => (string) $this->id, 'type' => \PDO::PARAM_STR];
                         break;
                     default:
                         throw new \Exception('Invalid class for id field');

@@ -278,7 +278,7 @@ abstract class AbstractRequest {
         $count = null;
 
         foreach($this->getDatabase()->queryRows($query, $this->bindings) as $row) {
-            $count = (Integer) $row['C'];
+            $count = (int) $row['C'];
         }
 
         $this->bindings = [];
