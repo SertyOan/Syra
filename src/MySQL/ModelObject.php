@@ -262,7 +262,7 @@ abstract class ModelObject {
                         break;
                     case 'Timestamp':
                         $fields[] = '`'.$property.'`';
-                        $params[] = ['value' => (integer) $this->$property->format('U'), 'type' => \PDO::PARAM_INT];
+                        $params[] = ['value' => (int) $this->$property->format('U'), 'type' => \PDO::PARAM_INT];
                         break;
                     case 'JSON':
                         $fields[] = '`'.$property.'`';
@@ -274,7 +274,7 @@ abstract class ModelObject {
 
                             switch(gettype($this->$property->value)) {
                                 case 'integer':
-                                    $params[] = ['value' => (integer) $this->$property->value, 'type' => \PDO::PARAM_INT];
+                                    $params[] = ['value' => (int) $this->$property->value, 'type' => \PDO::PARAM_INT];
                                     break;
                                 case 'string':
                                     $params[] = ['value' => (string) $this->$property->value, 'type' => \PDO::PARAM_STR];
