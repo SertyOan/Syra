@@ -319,7 +319,7 @@ abstract class AbstractRequest {
                     if(!isset($objects[$objectID])) {
                         $class = $this->classes[$i];
                         $object = new $class;
-                        $object->map($line, 'T'.$i);
+                        $object->map($line, 'T'.$i, $this->fields[$i]);
 
                         $objects[$objectID] = $object;
                     }
