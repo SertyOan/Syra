@@ -142,11 +142,18 @@ abstract class ModelObject {
         $this->__inDatabase = (bool) $bool;
     }
 
-    final public function map($data, $prefix) {
+    final public function map($data, $prefix, array $properties = []) {
         $this->__inDatabase = true;
 
-        foreach(static::$properties as $property => $description) {
-            if(isset($data[$prefix.'_'.$property])) {
+        if (empty($properties)) {
+            foreach(array_keys(static::$properties) as $property) {
+                if(isset($data[$prefix.'_'.$property])) {
+                    $this->__set($property, $data[$prefix.'_'.$property]);
+                }
+            }
+        }
+        else {
+            foreach($properties as $property) {
                 $this->__set($property, $data[$prefix.'_'.$property]);
             }
         }
