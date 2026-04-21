@@ -12,6 +12,7 @@ abstract class AbstractRequest {
     protected $fields = [];
     protected $orderBy = [];
     protected $links = [];
+    protected $pathes = [];
     protected $conditions = [];
     protected $bindings;
     protected $offset = 0;
@@ -120,6 +121,7 @@ abstract class AbstractRequest {
         $this->links[$rightTableIndex]['rightTableField'] = $rightTableField;
         $this->links[$rightTableIndex]['leftTableIndex'] = $leftTableIndex;
         $this->links[$rightTableIndex]['leftTableField'] = $leftTableField;
+        $this->linkToRootClass($rightTableIndex);
         return $this;
     }
 
@@ -302,7 +304,6 @@ abstract class AbstractRequest {
     public function mapAsObjects() : Array {
         $this->bindings = [];
         $objects = Array();
-        $pathes = Array();
         $lastIndex = null;
         $query = $this->generateDataSQL();
 
@@ -324,11 +325,10 @@ abstract class AbstractRequest {
                     }
                 }
                 else if(!empty($objectID)) {
-                    $this->linkToRootClass($pathes, $i);
                     $target =& $objects[$line['T0_id']];
 
-                    for($j = sizeof($pathes[$i]) - 1; $j >= 0; $j--) {
-                        list($step, $tableIndex) = $pathes[$i][$j];
+                    for($j = sizeof($this->pathes[$i]) - 1; $j >= 0; $j--) {
+                        list($step, $tableIndex) = $this->pathes[$i][$j];
 
                         if($j !== 0) {
                             $target =& $target->$step;
@@ -369,29 +369,25 @@ abstract class AbstractRequest {
         return $objects;
     }
 
-    private function linkToRootClass(&$pathes, $rightTableIndex) { // TODO check if we cannot build $pathes during request build
-        if(empty($pathes[$rightTableIndex])) {
-            $pathes[$rightTableIndex] = Array();
+    private function linkToRootClass($rightTableIndex) {
+        $this->pathes[$rightTableIndex] = Array();
 
-            $link = $this->links[$rightTableIndex];
-            $leftTableIndex = $link['leftTableIndex'];
+        $link = $this->links[$rightTableIndex];
+        $leftTableIndex = $link['leftTableIndex'];
 
-            $linkField = $link['leftTableField'];
-            $class = $this->classes[$leftTableIndex];
+        $linkField = $link['leftTableField'];
+        $class = $this->classes[$leftTableIndex];
 
-            if(!empty($link['alias'])) {
-                $pathes[$rightTableIndex][] = Array('my'.$link['alias'], $rightTableIndex);
-            }
-            else {
-                $pathes[$rightTableIndex][] = Array($linkField, $rightTableIndex);
-            }
+        if(!empty($link['alias'])) {
+            $this->pathes[$rightTableIndex][] = Array('my'.$link['alias'], $rightTableIndex);
+        }
+        else {
+            $this->pathes[$rightTableIndex][] = Array($linkField, $rightTableIndex);
+        }
 
-            if($link['leftTableIndex'] !== 0) {
-                $this->linkToRootClass($pathes, $leftTableIndex);
-
-                foreach($pathes[$leftTableIndex] as $step) {
-                    $pathes[$rightTableIndex][] = $step;
-                }
+        if($link['leftTableIndex'] !== 0) {
+            foreach($this->pathes[$leftTableIndex] as $step) {
+                $this->pathes[$rightTableIndex][] = $step;
             }
         }
     }
