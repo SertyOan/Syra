@@ -154,6 +154,11 @@ abstract class Request extends AbstractRequest {
             }
 
             $sql .= $this->generateSQLOperator($condition);
+
+            if(!empty($condition['closing'])) {
+                $sql .= $condition['closing'];
+                $opened -= strlen($condition['closing']);
+            }
         }
 
         $sql .= str_repeat(')', $opened);
@@ -275,7 +280,7 @@ abstract class Request extends AbstractRequest {
         if(is_subclass_of($propertyClass, self::OBJECTS_CLASS)) {
             $propertyClass = $propertyClass::getPropertyClass('id');
             $value = is_subclass_of($value, self::OBJECTS_CLASS) ? $value->id : $value;
-        } 
+        }
         else if(enum_exists($propertyClass)) {
             if($value instanceof $propertyClass) {
                 $value = $value->value;
