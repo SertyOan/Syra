@@ -306,10 +306,11 @@ abstract class AbstractRequest {
         $objects = Array();
         $lastIndex = null;
         $query = $this->generateDataSQL();
+        $c = sizeof($this->classes);
 
         foreach($this->getDatabase()->queryRows($query, $this->bindings) as $line) {
-            for($i = 0, $c = sizeof($this->classes); $i < $c; $i++) {
-                if(sizeof($this->fields[$i]) === 0) { // NOTE ignore when no field is retrieved for a table
+            for($i = 0; $i < $c; $i++) {
+                if(empty($this->fields[$i])) { // NOTE ignore when no field is retrieved for a table
                     continue;
                 }
 
@@ -348,7 +349,7 @@ abstract class AbstractRequest {
                                 if(!isset($target->{$step}[$objectID])) {
                                     $class = $this->classes[$i];
                                     $object = new $class;
-                                    $object->map($line, 'T'.$i);
+                                    $object->map($line, 'T'.$i, $this->fields[$i]);
 
                                     $target->{$step}[$objectID] = $object;
                                 }
@@ -356,7 +357,7 @@ abstract class AbstractRequest {
                             else if(!$target->{$step}->isSaved()) {
                                 $class = $this->classes[$i];
                                 $object = new $class;
-                                $object->map($line, 'T'.$i);
+                                $object->map($line, 'T'.$i, $this->fields[$i]);
                                 $target->$step = $object;
                             }
                         }
