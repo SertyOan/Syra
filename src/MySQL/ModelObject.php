@@ -26,6 +26,27 @@ abstract class ModelObject {
         return '`'.static::DATABASE_SCHEMA.'`.`'.static::DATABASE_TABLE.'`';
     }
 
+    /**
+     * Symmetric function of toArray, it create corresponding ModelObject from attribute stored in an array.
+     * When we need to keep a large amount of object, it can save memory to keep them as array instead of object.
+     * @param $isSaved [optional] indicate if created object already exist in DB or not. if not provided, it consider it exist if id is defined.
+     */
+    public static function fromArray(ModelObject|array $array, ?bool $isSaved = null): static {
+        if ($array instanceof ModelObject) {
+            return $array;
+        }
+        $mo = new static();
+        foreach ($array as $key => $value) {
+            $mo->__set($key, $value);
+        }
+        if(is_bool($isSaved)) {
+            $mo->setSaved($isSaved);
+        } elseif (!empty($array['id'])) {
+            $mo->setSaved(true);
+        }
+        return $mo;
+    }
+
     public function __isset($property) {
         return property_exists($this, $property) || isset($this->__collections[$property]);
     }
