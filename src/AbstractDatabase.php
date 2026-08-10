@@ -56,7 +56,12 @@ abstract class AbstractDatabase {
     }
 
     public function isConnected() {
-        return $this->link instanceof \PDO;
+        try {
+            return $this->link instanceof \PDO && $this->link->query('SELECT 1') !== false;
+        }
+        catch (\PDOException $e) {
+            return false;
+        }
     }
 
     public function query($sql, $params = []) {
