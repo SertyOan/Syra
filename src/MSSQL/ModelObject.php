@@ -2,10 +2,9 @@
 namespace Syra\MSSQL;
 
 abstract class ModelObject {
-    private
-        $__inDatabase = false, // TODO review naming
-        $__nulled = Array(),
-        $__collections = Array();
+    private $__inDatabase = false; // TODO review naming
+    private $__nulled = Array();
+    private $__collections = Array();
 
     final public static function hasProperty($property) {
         return isset(static::$properties[$property]);
@@ -43,6 +42,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer': $this->$property = (int) $value; break;
+                    case 'Boolean': $this->$property = (bool) $value; break;
                     case 'Float': $this->$property = (float) $value; break;
                     case 'String': $this->$property = (string) $value; break;
                     case 'JSON': $this->$property = is_string($value) ? json_decode($value) : $value; break;
@@ -104,6 +104,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer':
+                    case 'Boolean':
                     case 'Float':
                     case 'String':
                     case 'DateTime':
@@ -156,6 +157,7 @@ abstract class ModelObject {
 
                 switch($class) {
                     case 'Integer': $array[$property] = (int) $this->$property; break;
+                    case 'Boolean': $array[$property] = (bool) $this->$property; break;
                     case 'Float': $array[$property] = (float) $this->$property; break;
                     case 'String': $array[$property] = (string) $this->$property; break;
                     case 'DateTime': $array[$property] = $this->$property->format('Y-m-d H:i:s'); break;
@@ -231,6 +233,10 @@ abstract class ModelObject {
                     case 'Integer':
                         $fields[] = '['.$property.']';
                         $params[] = ['value' => (int) $this->$property, 'type' => \PDO::PARAM_INT];
+                        break;
+                    case 'Boolean':
+                        $fields[] = '['.$property.']';
+                        $params[] = ['value' => (bool) $this->$property, 'type' => \PDO::PARAM_INT];
                         break;
                     case 'Float':
                         $fields[] = '['.$property.']';
